@@ -1,0 +1,9 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/dot/programming/C++/DotEngine/output",
+            "binaryPath": "/home/dot/programming/C++/DotEngine/output/App",
+            "binaryArgs": []
+        }
+    ]
+}
