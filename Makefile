@@ -45,7 +45,7 @@ compile:
 
 compile-win32:
 	@echo "Compiling for win32..."
-	@x86_64-w64-mingw32-g++ -o $(out).exe $(src) -I$(iGLFW) -I$(iVK) -I$(lGLM) $(lGLFWWin) $(lVKWin) -static-libgcc -static-libstdc++ -lgdi32
+	@x86_64-w64-mingw32-g++ -o $(out).exe $(src) -I$(iGLFW) -I$(iVK) -I$(lGLM) $(lGLFWWin) $(lVKWin) -static-libgcc -static-libstdc++ -lgdi32 -static -lpthread
 
 clean:
 	@echo "Cleaning ..."
