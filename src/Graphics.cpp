@@ -1,15 +1,16 @@
 #include "Graphics.h"
 
 #include <iostream>
+#include <vector>
 
 Graphics::Graphics()
 {
-
+    initVulkan();
 }
 
 Graphics::~Graphics()
 {
-
+    vkDestroyInstance(vkInst, nullptr);
 }
 
 void Graphics::initVulkan()
@@ -32,9 +33,17 @@ void Graphics::initVulkan()
 
     instInfo.enabledExtensionCount = glfwExtensionCount;
     instInfo.ppEnabledExtensionNames = glfwExtensions;
+
+// non-essential extensions
+    // uint32_t optionalExtensionCount = 0;
+    // vkEnumerateInstanceExtensionProperties(nullptr, &optionalExtensionCount, nullptr); // how many extensions avilable
+
+    // std::vector<VkExtensionProperties> optionalExtensions(optionalExtensionCount);
+    // vkEnumerateInstanceExtensionProperties(nullptr, &optionalExtensionCount, optionalExtensions.data());
+
+    // if(vkCreateInstance(&instInfo, nullptr, &vkInst) != VK_SUCCESS)
+    //     throw std::runtime_error("Failed to create the vk instance!");
+
     instInfo.enabledLayerCount = 0;
     // instInfo.ppEnabledLayerNames = nullptr;
-
-    if(vkCreateInstance(&instInfo, nullptr, &vkInst) != VK_SUCCESS)
-        throw std::runtime_error("Failed to create the vk instance!");
 }
