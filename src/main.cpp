@@ -1,14 +1,10 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "App.h"
 
 #include <iostream>
 
-#include "TestTriangle.h"
-
-
 int main()
 {
-    TestTriangle app;
+    App app;
 
     try
     {
@@ -17,8 +13,11 @@ int main()
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
-        return EXIT_FAILURE;
     }
-    
-    return EXIT_SUCCESS;
+    catch(...)
+    {
+        std::cerr << "Unknown error occurred!" << '\n';
+    }
+
+    return 0;
 }
