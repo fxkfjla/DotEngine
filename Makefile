@@ -50,12 +50,20 @@ run-win32:
 	@echo ""
 
 compile:
-	@echo "Compiling app..."
-	@$(CXX) -o $(out) $(src) $(IDFLAGS) $(LDFLAGS)
+	@echo "Compiling app in debug..."
+	@$(CXX) $(CFLAGS) -o $(out) $(src) $(IDFLAGS) $(LDFLAGS)
+	
+compile-release:
+	@echo "Compiling app for release..."
+	@$(CXX) $(CFLAGS) -o $(out) $(src) $(IDFLAGS) $(LDFLAGS) -DNDEBUG
 
 compile-win32:
 	@echo "Compiling for win32..."
-	@x86_64-w64-mingw32-g++ -o $(out).exe $(src) $(IDFLAGS) $(LDFLAGSWIN) $(WINDEP) 
+	@x86_64-w64-mingw32-g++ $(CFLAGS) -o $(out).exe $(src) $(IDFLAGS) $(LDFLAGSWIN) $(WINDEP)
+
+compile-win32-release:
+	@echo "Compiling for win32 release..."
+	@x86_64-w64-mingw32-g++ $(CFLAGS) -o $(out).exe $(src) $(IDFLAGS) $(LDFLAGSWIN) $(WINDEP) -DNDEBUG
 
 clean:
 	@echo "Cleaning ..."
