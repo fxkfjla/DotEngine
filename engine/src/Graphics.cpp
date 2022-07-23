@@ -2,11 +2,13 @@
 
 #include <iostream>
 #include <cstring>
+#include <optional>
 
 Graphics::Graphics()
 {
     initVulkan();
     initDebugMessenger();
+    selectPhysicalDevice();
 }
 
 Graphics::~Graphics()
@@ -56,7 +58,43 @@ void Graphics::initVulkan()
         throw std::runtime_error("Failed to create the vk instance!");
 }
 
-std::vector<const char*> Graphics::getRequiredExtensions() noexcept
+void Graphics::initDebugMessenger()
+{
+    if(!validationLayersEnabled)
+        return;
+    
+    VkDebugUtilsMessengerCreateInfoEXT debugMessengerInfo;
+    setDebugMessengerCreateInfo(debugMessengerInfo);
+
+    if(createDebugMessenger(vkInst, &debugMessengerInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create a debug messenger!");
+}
+
+void Graphics::selectPhysicalDevice()
+{
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(vkInst, &deviceCount, nullptr);
+
+    if(deviceCount == 0)
+        throw std::runtime_error("Failed to find any GPU!");
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(vkInst, &deviceCount, devices.data());
+
+    for(const auto& device : devices)
+    {
+        if(deviceIsSupported(device))
+        {
+            physicalDevice = device;
+            break;
+        }
+    }
+
+    if(physicalDevice == VK_NULL_HANDLE)
+        throw std::runtime_error("GPU not supported!");
+}
+
+std::vector<const char*> Graphics::getRequiredExtensions() const noexcept
 {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -68,7 +106,52 @@ std::vector<const char*> Graphics::getRequiredExtensions() noexcept
     return extensions;
 }
 
-bool Graphics::validationLayersSupported() noexcept
+bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) const noexcept
+{
+// basic device properties like name, type, vulkan version
+    // VkPhysicalDeviceProperties deviceProperties;
+    // vkGetPhysicalDeviceProperties(device, &deviceProperties);
+// optional features like texture compression, 64 bit floats, multi viewport rendering
+    // VkPhysicalDeviceFeatures deviceFeatures;
+    // vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+    // return 
+    //     deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+    //     deviceFeatures.geometryShader; && has_value
+
+    const auto&& queueIndices = findQueueFamiliesOf(device);
+
+    return queueIndices.graphicFamily.has_value();
+}
+
+QueueFamilyIndices Graphics::findQueueFamiliesOf(const VkPhysicalDevice& device)const noexcept
+{
+    QueueFamilyIndices queueIndices;
+
+    uint32_t queueFamiliesCounter = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamiliesCounter, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamiliesCounter);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamiliesCounter, queueFamilies.data());
+
+    // searching of queues indices that support selected operations
+
+    int i = 0;
+    for(const auto& queueFamily : queueFamilies)
+    {
+        if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            queueIndices.graphicFamily = i;
+
+        if(queueIndices.found())
+            break;
+
+        i++;
+    }
+
+    return queueIndices;
+}
+
+bool Graphics::validationLayersSupported() const noexcept
 {
     uint32_t validationLayersCount = 0;
     vkEnumerateInstanceLayerProperties(&validationLayersCount, nullptr);
@@ -107,18 +190,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
     std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
-}
-
-void Graphics::initDebugMessenger()
-{
-    if(!validationLayersEnabled)
-        return;
-    
-    VkDebugUtilsMessengerCreateInfoEXT debugMessengerInfo;
-    setDebugMessengerCreateInfo(debugMessengerInfo);
-
-    if(createDebugMessenger(vkInst, &debugMessengerInfo, nullptr, &debugMessenger) != VK_SUCCESS)
-        throw std::runtime_error("Failed to create a debug messenger!");
 }
 
 VkResult Graphics::createDebugMessenger
