@@ -9,10 +9,12 @@ Graphics::Graphics()
     initVulkan();
     initDebugMessenger();
     selectPhysicalDevice();
+    initLogicalDevice();
 }
 
 Graphics::~Graphics()
 {
+    vkDestroyDevice(device, nullptr);
     destroyDebugMessenger(vkInst, debugMessenger, nullptr);
     vkDestroyInstance(vkInst, nullptr);
 }
@@ -94,6 +96,40 @@ void Graphics::selectPhysicalDevice()
         throw std::runtime_error("GPU not supported!");
 }
 
+void Graphics::initLogicalDevice()
+{
+    VkDeviceQueueCreateInfo queueCreateInfo = {};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = queueIndices.graphicFamily.value();
+    queueCreateInfo.queueCount = 1;
+
+    float queuePriority = 1.0f;
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+
+    VkPhysicalDeviceFeatures deviceFeatures = {};
+
+    VkDeviceCreateInfo deviceCreateInfo = {};
+    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+    deviceCreateInfo.queueCreateInfoCount = 1;
+    deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+    deviceCreateInfo.enabledExtensionCount = 0;
+
+    if(validationLayersEnabled)
+    {
+        deviceCreateInfo.enabledLayerCount = validationLayers.size();
+        deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+    }
+    else
+        deviceCreateInfo.enabledLayerCount = 0;
+
+    if(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create logical device!");
+    
+// 0 because we are creating only 1 queue
+    vkGetDeviceQueue(device, queueIndices.graphicFamily.value(), 0, &graphicQueue);
+}
+
 std::vector<const char*> Graphics::getRequiredExtensions() const noexcept
 {
     uint32_t glfwExtensionCount = 0;
@@ -106,7 +142,7 @@ std::vector<const char*> Graphics::getRequiredExtensions() const noexcept
     return extensions;
 }
 
-bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) const noexcept
+bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) noexcept
 {
 // basic device properties like name, type, vulkan version
     // VkPhysicalDeviceProperties deviceProperties;
@@ -119,15 +155,13 @@ bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) const noexcept
     //     deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
     //     deviceFeatures.geometryShader; && has_value
 
-    const auto&& queueIndices = findQueueFamiliesOf(device);
+    setQueueFamiliesOf(device);
 
     return queueIndices.graphicFamily.has_value();
 }
 
-QueueFamilyIndices Graphics::findQueueFamiliesOf(const VkPhysicalDevice& device)const noexcept
+void Graphics::setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept
 {
-    QueueFamilyIndices queueIndices;
-
     uint32_t queueFamiliesCounter = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamiliesCounter, nullptr);
 
@@ -147,8 +181,6 @@ QueueFamilyIndices Graphics::findQueueFamiliesOf(const VkPhysicalDevice& device)
 
         i++;
     }
-
-    return queueIndices;
 }
 
 bool Graphics::validationLayersSupported() const noexcept
@@ -186,7 +218,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
     void* pUserData
 )
 {
-// change to message box
     std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;

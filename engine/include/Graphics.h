@@ -14,10 +14,11 @@ private:
     void initVulkan();
     void initDebugMessenger();
     void selectPhysicalDevice();
+    void initLogicalDevice();
     std::vector<const char*> getRequiredExtensions() const noexcept;
-    bool deviceIsSupported(const VkPhysicalDevice&) const noexcept;
+    bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
 // searching for device supported queues, almost every operation in vulkan is submitted to a queue (drawing, uploading textures etc)
-    struct QueueFamilyIndices findQueueFamiliesOf(const VkPhysicalDevice& device) const noexcept;
+    void setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept;
     bool validationLayersSupported() const noexcept;
     VkResult createDebugMessenger
     (
@@ -37,6 +38,18 @@ private:
     VkInstance vkInst;
     VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice;  // destroyed with VkInstance
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphicFamily;
+
+        bool found() const noexcept
+        {
+            return
+                graphicFamily.has_value();
+        }
+    } queueIndices;
+    VkDevice device;
+    VkQueue graphicQueue;
     const std::vector<const char*> validationLayers =
     {
         "VK_LAYER_KHRONOS_validation"
@@ -46,15 +59,4 @@ private:
     #else
         const bool validationLayersEnabled = true;
     #endif
-};
-
-struct QueueFamilyIndices
-{
-    std::optional<uint32_t> graphicFamily;
-
-    bool found() const noexcept
-    {
-        return
-            graphicFamily.has_value();
-    }
 };
