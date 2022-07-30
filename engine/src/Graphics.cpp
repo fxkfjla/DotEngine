@@ -157,7 +157,7 @@ bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) noexcept
 
     setQueueFamiliesOf(device);
 
-    return queueIndices.graphicFamily.has_value();
+    return queueIndices.found();
 }
 
 void Graphics::setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept

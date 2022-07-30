@@ -4,7 +4,8 @@
 
 int main()
 {
-    App app;
+    Window wnd;
+    App app(wnd);
 
     try
     {

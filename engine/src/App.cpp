@@ -1,5 +1,11 @@
 #include "App.h"
 
+App::App(Window& wnd)
+    : wnd(wnd)
+{
+
+}
+
 void App::run()
 {
     while(!glfwWindowShouldClose(wnd))
