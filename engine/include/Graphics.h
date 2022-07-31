@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DotGLFW.h"
+#include "Window.h"
 
 #include <vector>
 #include <optional>
@@ -8,11 +9,12 @@
 class Graphics
 {
 public:
-    Graphics();
+    Graphics(Window&);
     ~Graphics();
 private:
     void initVulkan();
     void initDebugMessenger();
+    void initSurface();
     void selectPhysicalDevice();
     void initLogicalDevice();
     std::vector<const char*> getRequiredExtensions() const noexcept;
@@ -37,6 +39,8 @@ private:
 private:
     VkInstance vkInst;
     VkDebugUtilsMessengerEXT debugMessenger;
+    Window& wnd;
+    VkSurfaceKHR surface;
     VkPhysicalDevice physicalDevice;  // destroyed with VkInstance
     struct QueueFamilyIndices
     {

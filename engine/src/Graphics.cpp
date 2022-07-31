@@ -4,10 +4,12 @@
 #include <cstring>
 #include <optional>
 
-Graphics::Graphics()
+Graphics::Graphics(Window& wnd)
+    : wnd(wnd)
 {
     initVulkan();
     initDebugMessenger();
+    initSurface();
     selectPhysicalDevice();
     initLogicalDevice();
 }
@@ -16,6 +18,7 @@ Graphics::~Graphics()
 {
     vkDestroyDevice(device, nullptr);
     destroyDebugMessenger(vkInst, debugMessenger, nullptr);
+    vkDestroySurfaceKHR(vkInst, surface, nullptr);;
     vkDestroyInstance(vkInst, nullptr);
 }
 
@@ -70,6 +73,12 @@ void Graphics::initDebugMessenger()
 
     if(createDebugMessenger(vkInst, &debugMessengerInfo, nullptr, &debugMessenger) != VK_SUCCESS)
         throw std::runtime_error("Failed to create a debug messenger!");
+}
+
+void Graphics::initSurface()
+{
+    if(glfwCreateWindowSurface(vkInst, wnd, nullptr, &surface) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create window surface!");
 }
 
 void Graphics::selectPhysicalDevice()
