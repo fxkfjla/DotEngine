@@ -13,6 +13,5 @@ private:
     void renderFrame();
 private:
     Window& wnd;
-     
     Graphics gfx;
 };

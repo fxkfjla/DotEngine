@@ -1,7 +1,7 @@
 #include "App.h"
 
 App::App(Window& wnd)
-    : wnd(wnd)
+    : wnd(wnd), gfx(wnd)
 {
 
 }
