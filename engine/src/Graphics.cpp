@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstring>
 #include <optional>
+#include <set>
 
 Graphics::Graphics(Window& wnd)
     : wnd(wnd)
@@ -107,20 +108,26 @@ void Graphics::selectPhysicalDevice()
 
 void Graphics::initLogicalDevice()
 {
-    VkDeviceQueueCreateInfo queueCreateInfo = {};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = queueIndices.graphicFamily.value();
-    queueCreateInfo.queueCount = 1;
+    std::set<uint32_t> uniqueQueues = {queueIndices.graphicFamily.value(), queueIndices.presentFamily.value()};
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
     float queuePriority = 1.0f;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    for(auto queue : uniqueQueues)
+    {
+        VkDeviceQueueCreateInfo queueCreateInfo = {};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queue;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.emplace_back(queueCreateInfo);
+    }
 
     VkPhysicalDeviceFeatures deviceFeatures = {};
 
     VkDeviceCreateInfo deviceCreateInfo = {};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-    deviceCreateInfo.queueCreateInfoCount = 1;
+    deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+    deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(uniqueQueues.size());
     deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
     deviceCreateInfo.enabledExtensionCount = 0;
 
@@ -137,6 +144,7 @@ void Graphics::initLogicalDevice()
     
 // 0 because we are creating only 1 queue
     vkGetDeviceQueue(device, queueIndices.graphicFamily.value(), 0, &graphicQueue);
+    vkGetDeviceQueue(device, queueIndices.presentFamily.value(), 0, &presentQueue);
 }
 
 std::vector<const char*> Graphics::getRequiredExtensions() const noexcept
@@ -179,11 +187,17 @@ void Graphics::setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept
 
     // searching of queues indices that support selected operations
 
-    int i = 0;
+    VkBool32 presentSupport = VK_FALSE;
+    uint32_t i = 0;
     for(const auto& queueFamily : queueFamilies)
     {
         if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             queueIndices.graphicFamily = i;
+
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+        if(presentSupport)
+            queueIndices.presentFamily = i;
 
         if(queueIndices.found())
             break;

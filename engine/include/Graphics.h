@@ -45,15 +45,18 @@ private:
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphicFamily;
+        std::optional<uint32_t> presentFamily;
 
         bool found() const noexcept
         {
             return
-                graphicFamily.has_value();
+                graphicFamily.has_value() &&
+                presentFamily.has_value();
         }
     } queueIndices;
     VkDevice device;
     VkQueue graphicQueue;
+    VkQueue presentQueue;
     const std::vector<const char*> validationLayers =
     {
         "VK_LAYER_KHRONOS_validation"
