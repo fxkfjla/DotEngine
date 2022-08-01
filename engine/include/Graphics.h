@@ -21,7 +21,8 @@ private:
     bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
     bool deviceExtensionsSupported(const VkPhysicalDevice&) const noexcept;
 // searching for device supported queues, almost every operation in vulkan is submitted to a queue (drawing, uploading textures etc)
-    void setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept;
+    void setQueueFamilies(const VkPhysicalDevice&) noexcept;
+    void setSwapChainDetails(const VkPhysicalDevice&) noexcept;
     bool validationLayersSupported() const noexcept;
     VkResult createDebugMessenger
     (
@@ -47,6 +48,12 @@ private:
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+    struct SwapChainSupportDetails
+    {
+        VkSurfaceCapabilitiesKHR capabilites;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> modes;
+    } swapChainDetails;
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphicFamily;

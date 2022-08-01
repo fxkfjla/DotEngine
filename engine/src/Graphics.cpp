@@ -173,9 +173,18 @@ bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) noexcept
     //     deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
     //     deviceFeatures.geometryShader; && has_value
 
-    setQueueFamiliesOf(device);
+    setQueueFamilies(device);
 
-    return queueIndices.found() && deviceExtensionsSupported(device);
+    bool extensionsSupported = deviceExtensionsSupported(device);
+    bool swapChainCompatible;
+    if(extensionsSupported)
+    {
+        setSwapChainDetails(device);
+        swapChainCompatible = !swapChainDetails.formats.empty() && !swapChainDetails.modes.empty();
+    }
+
+
+    return queueIndices.found() && extensionsSupported && swapChainCompatible;
 }
 
 bool Graphics::deviceExtensionsSupported(const VkPhysicalDevice& device) const noexcept
@@ -194,7 +203,7 @@ bool Graphics::deviceExtensionsSupported(const VkPhysicalDevice& device) const n
     return requiredExtensions.empty();
 }
 
-void Graphics::setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept
+void Graphics::setQueueFamilies(const VkPhysicalDevice& device) noexcept
 {
     uint32_t queueFamiliesCounter = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamiliesCounter, nullptr);
@@ -221,6 +230,23 @@ void Graphics::setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept
 
         i++;
     }
+}
+
+void Graphics::setSwapChainDetails(const VkPhysicalDevice& device) noexcept
+{
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &swapChainDetails.capabilites);
+
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+    swapChainDetails.formats.resize(formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, swapChainDetails.formats.data());
+
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+    swapChainDetails.modes.resize(presentModeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, swapChainDetails.modes.data());
 }
 
 bool Graphics::validationLayersSupported() const noexcept
