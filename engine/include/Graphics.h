@@ -19,6 +19,7 @@ private:
     void initLogicalDevice();
     std::vector<const char*> getRequiredExtensions() const noexcept;
     bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
+    bool deviceExtensionsSupported(const VkPhysicalDevice&) const noexcept;
 // searching for device supported queues, almost every operation in vulkan is submitted to a queue (drawing, uploading textures etc)
     void setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept;
     bool validationLayersSupported() const noexcept;
@@ -41,7 +42,11 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger;
     Window& wnd;
     VkSurfaceKHR surface;
-    VkPhysicalDevice physicalDevice;  // destroyed with VkInstance
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;  // destroyed with VkInstance
+    const std::vector<const char*> deviceExtensions =
+    {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphicFamily;

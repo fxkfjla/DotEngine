@@ -129,7 +129,8 @@ void Graphics::initLogicalDevice()
     deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
     deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(uniqueQueues.size());
     deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-    deviceCreateInfo.enabledExtensionCount = 0;
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     if(validationLayersEnabled)
     {
@@ -174,7 +175,23 @@ bool Graphics::deviceIsSupported(const VkPhysicalDevice& device) noexcept
 
     setQueueFamiliesOf(device);
 
-    return queueIndices.found();
+    return queueIndices.found() && deviceExtensionsSupported(device);
+}
+
+bool Graphics::deviceExtensionsSupported(const VkPhysicalDevice& device) const noexcept
+{
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+    for(const auto& extension : availableExtensions)
+        requiredExtensions.erase(extension.extensionName);
+
+    return requiredExtensions.empty();
 }
 
 void Graphics::setQueueFamiliesOf(const VkPhysicalDevice& device) noexcept
@@ -214,23 +231,12 @@ bool Graphics::validationLayersSupported() const noexcept
     std::vector<VkLayerProperties> availableLayers(validationLayersCount);
     vkEnumerateInstanceLayerProperties(&validationLayersCount, availableLayers.data());
 
-    for(const char* layerName : validationLayers)
-    {
-        bool layerFound = false;
-        for(const auto& availableLayer : availableLayers)
-        {
-            if(strcmp(layerName, availableLayer.layerName) == 0)
-            {
-                layerFound = true;
-                break;
-            }
-        }
+    std::set<std::string> requiredLayers(validationLayers.begin(), validationLayers.end());
 
-        if(!layerFound)
-            return false;
-    }
+    for(const auto& layer : availableLayers)
+        requiredLayers.erase(layer.layerName);
 
-    return true;
+    return requiredLayers.empty();
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
