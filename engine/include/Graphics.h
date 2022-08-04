@@ -17,7 +17,7 @@ private:
     bool validationLayersSupported() const noexcept;
 
     void initDebugMessenger();
-    void setDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&) noexcept;
+    void setDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&) const noexcept;
     VkResult createDebugMessenger
     (
         VkInstance,
@@ -47,6 +47,8 @@ private:
     VkSurfaceFormatKHR getSwapSurfaceFormat() const noexcept;
     VkPresentModeKHR getSwapPresentMode() const noexcept;
 
+    void initImageViews();
+
     VkInstance vkInst;
     VkSurfaceKHR surface;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;  // destroyed with VkInstance
@@ -55,6 +57,7 @@ private:
     VkQueue presentQueue;
     VkSwapchainKHR swapChain;
     std::vector<VkImage> swapChainImages;
+    std::vector<VkImageView> swapChainImageViews;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
 
