@@ -323,6 +323,9 @@ void Graphics::initSwapChain()
     VkSurfaceFormatKHR surfaceFormat = getSwapSurfaceFormat();
     VkPresentModeKHR presentMode = getSwapPresentMode();
 
+    swapChainImageFormat = surfaceFormat.format;
+    swapChainExtent = extent;
+
     uint32_t imageCount = swapChainDetails.capabilities.minImageCount + 1;
 
     if(
@@ -366,6 +369,10 @@ void Graphics::initSwapChain()
 
     if(vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
         throw std::runtime_error("failed to create swap chain!");
+
+    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+    swapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 }
 
 VkExtent2D Graphics::getSwapExtent() const noexcept
