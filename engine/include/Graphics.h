@@ -13,21 +13,11 @@ public:
     ~Graphics();
 private:
     void initVulkan();
-    void initDebugMessenger();
-    void initSurface();
-    void selectPhysicalDevice();
-    void initLogicalDevice();
-    void initSwapChain();
     std::vector<const char*> getRequiredExtensions() const noexcept;
-    bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
-    bool deviceExtensionsSupported(const VkPhysicalDevice&) const noexcept;
-// searching for device supported queues, almost every operation in vulkan is submitted to a queue (drawing, uploading textures etc)
-    void setQueueFamilies(const VkPhysicalDevice&) noexcept;
-    void setSwapChainDetails(const VkPhysicalDevice&) noexcept;
-    VkExtent2D getSwapExtent() const noexcept;
-    VkSurfaceFormatKHR getSwapSurfaceFormat() const noexcept;
-    VkPresentModeKHR getSwapPresentMode() const noexcept;
     bool validationLayersSupported() const noexcept;
+
+    void initDebugMessenger();
+    void setDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&) noexcept;
     VkResult createDebugMessenger
     (
         VkInstance,
@@ -41,24 +31,36 @@ private:
         VkDebugUtilsMessengerEXT,
         const VkAllocationCallbacks*
     ) noexcept;
-    void setDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&) noexcept;
-private:
+
+    void initSurface();
+
+    void selectPhysicalDevice();
+    bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
+    void setQueueFamilies(const VkPhysicalDevice&) noexcept;
+    bool deviceExtensionsSupported(const VkPhysicalDevice&) const noexcept;
+    void setSwapChainDetails(const VkPhysicalDevice&) noexcept;
+
+    void initLogicalDevice();
+
+    void initSwapChain();
+    VkExtent2D getSwapExtent() const noexcept;
+    VkSurfaceFormatKHR getSwapSurfaceFormat() const noexcept;
+    VkPresentModeKHR getSwapPresentMode() const noexcept;
+
     VkInstance vkInst;
-    VkDebugUtilsMessengerEXT debugMessenger;
-    Window& wnd;
     VkSurfaceKHR surface;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;  // destroyed with VkInstance
+    VkDevice device;
+    VkQueue graphicQueue;
+    VkQueue presentQueue;
+    VkSwapchainKHR swapChain;
+
+    Window& wnd;
+
     const std::vector<const char*> deviceExtensions =
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
-    struct SwapChainSupportDetails
-    {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> modes;
-    } swapChainDetails;
-    VkSwapchainKHR swapChain;
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphicFamily;
@@ -71,9 +73,14 @@ private:
                 presentFamily.has_value();
         }
     } queueIndices;
-    VkDevice device;
-    VkQueue graphicQueue;
-    VkQueue presentQueue;
+    struct SwapChainSupportDetails
+    {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> modes;
+    } swapChainDetails;
+
+    VkDebugUtilsMessengerEXT debugMessenger;
     const std::vector<const char*> validationLayers =
     {
         "VK_LAYER_KHRONOS_validation"
