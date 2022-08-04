@@ -17,12 +17,16 @@ private:
     void initSurface();
     void selectPhysicalDevice();
     void initLogicalDevice();
+    void initSwapChain();
     std::vector<const char*> getRequiredExtensions() const noexcept;
     bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
     bool deviceExtensionsSupported(const VkPhysicalDevice&) const noexcept;
 // searching for device supported queues, almost every operation in vulkan is submitted to a queue (drawing, uploading textures etc)
     void setQueueFamilies(const VkPhysicalDevice&) noexcept;
     void setSwapChainDetails(const VkPhysicalDevice&) noexcept;
+    VkExtent2D getSwapExtent() const noexcept;
+    VkSurfaceFormatKHR getSwapSurfaceFormat() const noexcept;
+    VkPresentModeKHR getSwapPresentMode() const noexcept;
     bool validationLayersSupported() const noexcept;
     VkResult createDebugMessenger
     (
@@ -50,10 +54,11 @@ private:
     };
     struct SwapChainSupportDetails
     {
-        VkSurfaceCapabilitiesKHR capabilites;
+        VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> modes;
     } swapChainDetails;
+    VkSwapchainKHR swapChain;
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphicFamily;
