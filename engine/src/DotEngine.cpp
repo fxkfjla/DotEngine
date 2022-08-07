@@ -1,28 +1,31 @@
 #include "DotEngine.h"
 
-DotEngine::DotEngine(Window& wnd)
-    : wnd(wnd), gfx(wnd)
+namespace Dot
 {
-
-}
-
-void DotEngine::run()
-{
-    while(!glfwWindowShouldClose(wnd))
+    Engine::Engine(Window& wnd)
+        : wnd(wnd), gfx(wnd)
     {
-        glfwPollEvents();
 
-        updateFrame();
-        renderFrame();
     }
-}
 
-void DotEngine::updateFrame()
-{
+    void Engine::run()
+    {
+        while(!glfwWindowShouldClose(wnd))
+        {
+            glfwPollEvents();
 
-}
+            updateFrame();
+            renderFrame();
+        }
+    }
 
-void DotEngine::renderFrame()
-{
+    void Engine::updateFrame()
+    {
 
+    }
+
+    void Engine::renderFrame()
+    {
+
+    }
 }

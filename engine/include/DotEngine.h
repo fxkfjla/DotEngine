@@ -3,15 +3,18 @@
 #include "Window.h"
 #include "Graphics.h"
 
-class DotEngine
+namespace Dot
 {
-public:
-    DotEngine(Window&);
-    void run();
-private:
-    void updateFrame();
-    void renderFrame();
+    class Engine
+    {
+    public:
+        Engine(Window&);
+        void run();
+    private:
+        void updateFrame();
+        void renderFrame();
 
-    Window& wnd;
-    Graphics gfx;
-};
+        Window& wnd;
+        Graphics gfx;
+    };
+}
