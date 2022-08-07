@@ -6,6 +6,7 @@ set(SRC
 	src/DotEngine.cpp
     src/Graphics.cpp
     src/Window.cpp
+	src/DotException.cpp
 )
 
 find_package(Vulkan REQUIRED)
