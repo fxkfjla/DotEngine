@@ -1,4 +1,5 @@
 #include "Graphics.h"
+#include "DotException.h"
 
 #include <iostream>
 #include <cstring>
@@ -58,7 +59,7 @@ void Graphics::initVulkan()
     instInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
     if(validationLayersEnabled && !validationLayersSupported())
-        throw std::runtime_error("Requested validation layers are not supported!");
+        throw DOT_RUNTIME("Requested validation layers are not supported!")
 
     vk::DebugUtilsMessengerCreateInfoEXT debugMessengerInfo; // outside scope to ensure it doesn't get destroyed before vkCreateInstance
     if(validationLayersEnabled)
@@ -82,8 +83,7 @@ void Graphics::initVulkan()
     }
     catch(const std::runtime_error& e)
     {
-        std::cerr << e.what() << '\n';
-        throw std::runtime_error("Failed to create the vk instance!");
+        throw DOT_RUNTIME_WHAT(e);
     }
 
     if(validationLayersEnabled)
@@ -179,7 +179,7 @@ void Graphics::initSurface()
     VkSurfaceKHR vkSurface;
 
     if(glfwCreateWindowSurface(vkInst, wnd, nullptr, &vkSurface) != VK_SUCCESS)
-        throw std::runtime_error("Failed to create window surface!");
+        throw DOT_RUNTIME("Faled to create window surface!");
 
     surface = vk::SurfaceKHR(vkSurface);
 }
@@ -198,7 +198,7 @@ void Graphics::selectPhysicalDevice()
     }
 
     if(!physicalDevice)
-        throw std::runtime_error("GPU not supported!");
+        throw DOT_RUNTIME("GPU not supported!");
 }
 
 bool Graphics::deviceIsSupported(const vk::PhysicalDevice& device) noexcept
@@ -298,8 +298,7 @@ void Graphics::initLogicalDevice()
     }
     catch(const std::runtime_error& e)
     {
-        std::cerr << e.what() << '\n';
-        throw std::runtime_error("Failed to create logical device!");
+        throw DOT_RUNTIME_WHAT(e);
     }
     
 // 0 because we are creating only 1 queue
@@ -364,8 +363,7 @@ void Graphics::initSwapChain()
     }
     catch(const std::runtime_error& e)
     {
-        std::cerr << e.what() << '\n';
-        throw std::runtime_error("Failed to create swap chain!");
+        throw DOT_RUNTIME_WHAT(e);
     }
 }
 
@@ -449,8 +447,7 @@ void Graphics::initImageViews()
         }
         catch(const std::runtime_error& e)
         {
-            std::cerr << e.what() << '\n';
-            throw std::runtime_error("Failed to create image views!");
+            throw DOT_RUNTIME_WHAT(e);
         }
     }
 }

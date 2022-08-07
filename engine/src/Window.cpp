@@ -1,18 +1,18 @@
 #include "Window.h"
 
-#include <iostream>
+#include "DotException.h"
 
 Window::Window()
 {
     if(!glfwInit()) // intializing glfw library
-        throw std::runtime_error("Failed to initialize GLFW library!");
+        throw DOT_RUNTIME("Failed to initalize GLFW library!");
 
     initGLFWhints();
 
     if(!(pWnd = glfwCreateWindow(width, height, "DotEngine", nullptr, nullptr)))
     {
         glfwTerminate();
-        throw std::runtime_error("Failed to create GLFW window!");
+        throw DOT_RUNTIME("Failed to create GLFW window!");
     }
 }
 
