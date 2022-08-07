@@ -1,12 +1,12 @@
-#include "App.h"
+#include "DotEngine.h"
 
-App::App(Window& wnd)
+DotEngine::DotEngine(Window& wnd)
     : wnd(wnd), gfx(wnd)
 {
 
 }
 
-void App::run()
+void DotEngine::run()
 {
     while(!glfwWindowShouldClose(wnd))
     {
@@ -17,12 +17,12 @@ void App::run()
     }
 }
 
-void App::updateFrame()
+void DotEngine::updateFrame()
 {
 
 }
 
-void App::renderFrame()
+void DotEngine::renderFrame()
 {
 
 }

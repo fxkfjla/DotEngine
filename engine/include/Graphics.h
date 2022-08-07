@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DotGLFW.h"
+#include "DotVulkan.h"
 #include "Window.h"
 
 #include <vector>
@@ -15,51 +15,39 @@ private:
     void initVulkan();
     std::vector<const char*> getRequiredExtensions() const noexcept;
     bool validationLayersSupported() const noexcept;
+    void displayExtensionsInfo(std::vector<const char*>) const noexcept;
 
-    void initDebugMessenger();
-    void setDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&) const noexcept;
-    VkResult createDebugMessenger
-    (
-        VkInstance,
-        const VkDebugUtilsMessengerCreateInfoEXT*,
-        const VkAllocationCallbacks*,
-        VkDebugUtilsMessengerEXT*
-    ) noexcept;
-    void destroyDebugMessenger
-    (
-        VkInstance,
-        VkDebugUtilsMessengerEXT,
-        const VkAllocationCallbacks*
-    ) noexcept;
+    void initDebugMessenger() noexcept;
+    void setDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT&) const noexcept;
 
     void initSurface();
 
     void selectPhysicalDevice();
-    bool deviceIsSupported(const VkPhysicalDevice&) noexcept;
-    void setQueueFamilies(const VkPhysicalDevice&) noexcept;
-    bool deviceExtensionsSupported(const VkPhysicalDevice&) const noexcept;
-    void setSwapChainDetails(const VkPhysicalDevice&) noexcept;
+    bool deviceIsSupported(const vk::PhysicalDevice&) noexcept;
+    void setQueueFamilies(const vk::PhysicalDevice&) noexcept;
+    bool deviceExtensionsSupported(const vk::PhysicalDevice&) const noexcept;
+    void setSwapChainDetails(const vk::PhysicalDevice&) noexcept;
 
     void initLogicalDevice();
 
     void initSwapChain();
-    VkExtent2D getSwapExtent() const noexcept;
-    VkSurfaceFormatKHR getSwapSurfaceFormat() const noexcept;
-    VkPresentModeKHR getSwapPresentMode() const noexcept;
+    vk::Extent2D getSwapExtent() const noexcept;
+    vk::SurfaceFormatKHR getSwapSurfaceFormat() const noexcept;
+    vk::PresentModeKHR getSwapPresentMode() const noexcept;
 
     void initImageViews();
 
-    VkInstance vkInst;
-    VkSurfaceKHR surface;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;  // destroyed with VkInstance
-    VkDevice device;
-    VkQueue graphicQueue;
-    VkQueue presentQueue;
-    VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> swapChainImageViews;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
+    vk::Instance vkInst;
+    vk::SurfaceKHR surface;
+    vk::PhysicalDevice physicalDevice = nullptr;  // destroyed with VkInstance
+    vk::Device device;
+    vk::Queue graphicQueue;
+    vk::Queue presentQueue;
+    vk::SwapchainKHR swapChain;
+    std::vector<vk::Image> swapChainImages;
+    std::vector<vk::ImageView> swapChainImageViews;
+    vk::Format swapChainImageFormat;
+    vk::Extent2D swapChainExtent;
 
     Window& wnd;
 
@@ -81,12 +69,13 @@ private:
     } queueIndices;
     struct SwapChainSupportDetails
     {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> modes;
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> modes;
     } swapChainDetails;
 
-    VkDebugUtilsMessengerEXT debugMessenger;
+    vk::DispatchLoaderDynamic dldi;
+    vk::DebugUtilsMessengerEXT debugMessenger;
     const std::vector<const char*> validationLayers =
     {
         "VK_LAYER_KHRONOS_validation"

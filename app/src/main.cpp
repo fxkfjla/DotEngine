@@ -1,15 +1,15 @@
-#include "App.h"
+#include "DotEngine.h"
 
 #include <iostream>
 
 int main()
 {
     Window wnd;
-    App app(wnd);
+    DotEngine engine(wnd);
 
     try
     {
-        app.run();
+        engine.run();
     }
     catch(const std::exception& e)
     {

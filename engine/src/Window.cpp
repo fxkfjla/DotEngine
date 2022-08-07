@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include <iostream>
+
 Window::Window()
 {
     if(!glfwInit()) // intializing glfw library
