@@ -7,6 +7,7 @@ set(SRC
     src/Graphics.cpp
     src/Window.cpp
 	src/DotException.cpp
+	src/Shader.cpp
 )
 
 find_package(Vulkan REQUIRED)
