@@ -37,6 +37,8 @@ private:
 
     void initImageViews();
 
+    void initPipeline();
+
     vk::Instance vkInst;
     vk::SurfaceKHR surface;
     vk::PhysicalDevice physicalDevice = nullptr;  // destroyed with VkInstance
@@ -48,6 +50,7 @@ private:
     std::vector<vk::ImageView> swapChainImageViews;
     vk::Format swapChainImageFormat;
     vk::Extent2D swapChainExtent;
+    vk::PipelineLayout pipelineLayout;
 
     Window& wnd;
 

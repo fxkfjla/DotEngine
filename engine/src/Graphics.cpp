@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "DotException.h"
+#include "Shader.h"
 
 #include <iostream>
 #include <cstring>
@@ -22,10 +23,14 @@ Graphics::Graphics(Window& wnd)
     initSwapChain();
 
     initImageViews();
+
+    initPipeline();
 }
 
 Graphics::~Graphics()
 {
+    device.destroyPipelineLayout(pipelineLayout);
+
     for(const auto& imageView : swapChainImageViews)
         device.destroyImageView(imageView);
 
@@ -449,5 +454,121 @@ void Graphics::initImageViews()
         {
             throw DOT_RUNTIME_WHAT(e);
         }
+    }
+}
+
+void Graphics::initPipeline()
+{
+    try
+    {
+        Shader vertShader("engine/shaders/vert.spv", device);
+        Shader fragShader("engine/shaders/frag.spv", device);
+
+        vk::PipelineShaderStageCreateInfo vertShaderStageInfo = {};
+        vertShaderStageInfo.sType = vk::StructureType::ePipelineShaderStageCreateInfo;
+        vertShaderStageInfo.stage = vk::ShaderStageFlagBits::eVertex;
+        vertShaderStageInfo.module = vertShader.getModule();
+        vertShaderStageInfo.pName = "main";
+
+        vk::PipelineShaderStageCreateInfo fragShaderStageInfo = {};
+        fragShaderStageInfo.sType = vk::StructureType::ePipelineShaderStageCreateInfo;
+        fragShaderStageInfo.stage = vk::ShaderStageFlagBits::eFragment;
+        fragShaderStageInfo.module = vertShader.getModule();
+        fragShaderStageInfo.pName = "main";
+    
+        vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+        std::vector<vk::DynamicState> dynamicStates = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+
+        vk::PipelineDynamicStateCreateInfo dynamicState = {};
+        dynamicState.sType = vk::StructureType::ePipelineDynamicStateCreateInfo;
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+        dynamicState.pDynamicStates = dynamicStates.data();
+
+        vk::PipelineVertexInputStateCreateInfo vertState = {};
+        vertState.sType = vk::StructureType::ePipelineVertexInputStateCreateInfo;
+        vertState.vertexBindingDescriptionCount = 0;
+        vertState.pVertexBindingDescriptions = nullptr;
+        vertState.vertexAttributeDescriptionCount = 0;
+        vertState.pVertexAttributeDescriptions = nullptr;
+
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly = {};
+        inputAssembly.sType = vk::StructureType::ePipelineInputAssemblyStateCreateInfo;
+        inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
+        inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+        vk::Viewport viewport = {};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float)swapChainExtent.width;
+        viewport.height= (float)swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        vk::Rect2D scissor = {};
+        scissor.offset = vk::Offset2D(0, 0);
+        scissor.extent = swapChainExtent;
+
+        vk::PipelineViewportStateCreateInfo viewportState = {};
+        viewportState.sType = vk::StructureType::ePipelineViewportStateCreateInfo;
+        viewportState.viewportCount = 1;
+        viewportState.scissorCount = 1;
+
+        vk::PipelineRasterizationStateCreateInfo rasterInfo = {};
+        rasterInfo.sType = vk::StructureType::ePipelineRasterizationStateCreateInfo;
+        rasterInfo.depthClampEnable = VK_FALSE;
+        rasterInfo.rasterizerDiscardEnable = VK_FALSE;
+        rasterInfo.polygonMode = vk::PolygonMode::eFill;
+        rasterInfo.lineWidth = 1.0f;
+        rasterInfo.cullMode = vk::CullModeFlagBits::eBack;
+        rasterInfo.frontFace = vk::FrontFace::eClockwise;
+        rasterInfo.depthBiasEnable = VK_FALSE;
+        rasterInfo.depthBiasConstantFactor = 0.0f;
+        rasterInfo.depthBiasClamp = 0.0f;
+        rasterInfo.depthBiasSlopeFactor = 0.0f;
+
+        vk::PipelineMultisampleStateCreateInfo multisampleInfo = {}; 
+        multisampleInfo.sType = vk::StructureType::ePipelineMultisampleStateCreateInfo;
+        multisampleInfo.sampleShadingEnable = VK_FALSE;
+        multisampleInfo.rasterizationSamples = vk::SampleCountFlagBits::e1;
+        multisampleInfo.minSampleShading = 1.0f;
+        multisampleInfo.pSampleMask = nullptr;
+        multisampleInfo.alphaToCoverageEnable = VK_FALSE;
+        multisampleInfo.alphaToOneEnable = VK_FALSE; 
+
+        vk::PipelineColorBlendAttachmentState colorBlendAttachment = {};
+        colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | 
+        vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+        colorBlendAttachment.blendEnable = VK_FALSE;
+        colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eOne;
+        colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eZero;
+        colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd; 
+        colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+        colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+
+        vk::PipelineColorBlendStateCreateInfo colorBlend = {};
+        colorBlend.sType = vk::StructureType::ePipelineColorBlendStateCreateInfo;
+        colorBlend.logicOpEnable = VK_FALSE;
+        colorBlend.logicOp = vk::LogicOp::eCopy;
+        colorBlend.attachmentCount = 1;
+        colorBlend.pAttachments = &colorBlendAttachment;
+        colorBlend.blendConstants[0] = 0.0f;
+        colorBlend.blendConstants[1] = 0.0f;
+        colorBlend.blendConstants[2] = 0.0f;
+        colorBlend.blendConstants[3] = 0.0f;
+
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo = {};
+        pipelineLayoutInfo.sType = vk::StructureType::ePipelineLayoutCreateInfo;
+        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.pSetLayouts = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+        pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e); 
     }
 }
