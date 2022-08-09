@@ -24,12 +24,15 @@ Graphics::Graphics(Window& wnd)
 
     initImageViews();
 
+    initRenderPass();
     initPipeline();
 }
 
 Graphics::~Graphics()
 {
+    device.destroyPipeline(pipeline);
     device.destroyPipelineLayout(pipelineLayout);
+    device.destroyRenderPass(renderPass);
 
     for(const auto& imageView : swapChainImageViews)
         device.destroyImageView(imageView);
@@ -170,7 +173,8 @@ void Graphics::setDebugMessengerCreateInfo(vk::DebugUtilsMessengerCreateInfoEXT&
     debugMessengerInfo.sType = vk::StructureType::eDebugUtilsMessengerCreateInfoEXT;
 
     debugMessengerInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-    vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+    vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError |
+    vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo;
 
     debugMessengerInfo.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
     vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
@@ -457,6 +461,44 @@ void Graphics::initImageViews()
     }
 }
 
+void Graphics::initRenderPass()
+{
+    vk::AttachmentDescription colorAttachment = {};
+    colorAttachment.format = swapChainImageFormat;
+    colorAttachment.samples = vk::SampleCountFlagBits::e1;
+    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+    colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+    colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
+    colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+
+    vk::AttachmentReference colorAttachmentRef = {};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+    vk::SubpassDescription subpass = {};
+    subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
+
+    vk::RenderPassCreateInfo renderPassInfo = {};
+    renderPassInfo.sType = vk::StructureType::eRenderPassCreateInfo;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+
+    try
+    {
+        renderPass = device.createRenderPass(renderPassInfo);
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
+    }
+}
+
 void Graphics::initPipeline()
 {
     try
@@ -473,7 +515,7 @@ void Graphics::initPipeline()
         vk::PipelineShaderStageCreateInfo fragShaderStageInfo = {};
         fragShaderStageInfo.sType = vk::StructureType::ePipelineShaderStageCreateInfo;
         fragShaderStageInfo.stage = vk::ShaderStageFlagBits::eFragment;
-        fragShaderStageInfo.module = vertShader.getModule();
+        fragShaderStageInfo.module = fragShader.getModule();
         fragShaderStageInfo.pName = "main";
     
         vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
@@ -566,6 +608,26 @@ void Graphics::initPipeline()
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
         pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
+
+        vk::GraphicsPipelineCreateInfo pipelineInfo = {};
+        pipelineInfo.sType = vk::StructureType::eGraphicsPipelineCreateInfo;
+        pipelineInfo.stageCount = 2;
+        pipelineInfo.pStages = shaderStages;
+        pipelineInfo.pVertexInputState = &vertState;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &rasterInfo;
+        pipelineInfo.pMultisampleState = &multisampleInfo;
+        pipelineInfo.pDepthStencilState = nullptr;
+        pipelineInfo.pColorBlendState = &colorBlend;
+        pipelineInfo.pDynamicState = &dynamicState;
+        pipelineInfo.layout = pipelineLayout;
+        pipelineInfo.renderPass = renderPass;
+        pipelineInfo.subpass = 0;
+        pipelineInfo.basePipelineHandle = nullptr;
+        pipelineInfo.basePipelineIndex = -1;
+    
+        pipeline = device.createGraphicsPipeline(nullptr, pipelineInfo).value;
     }
     catch(const std::runtime_error& e)
     {

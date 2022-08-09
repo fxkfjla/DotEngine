@@ -37,6 +37,8 @@ private:
 
     void initImageViews();
 
+    void initRenderPass();
+
     void initPipeline();
 
     vk::Instance vkInst;
@@ -50,7 +52,9 @@ private:
     std::vector<vk::ImageView> swapChainImageViews;
     vk::Format swapChainImageFormat;
     vk::Extent2D swapChainExtent;
+    vk::RenderPass renderPass;
     vk::PipelineLayout pipelineLayout;
+    vk::Pipeline pipeline;
 
     Window& wnd;
 
