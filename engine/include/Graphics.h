@@ -41,6 +41,8 @@ private:
 
     void initPipeline();
 
+    void initFramebuffers();
+
     vk::Instance vkInst;
     vk::SurfaceKHR surface;
     vk::PhysicalDevice physicalDevice = nullptr;  // destroyed with VkInstance
@@ -55,6 +57,7 @@ private:
     vk::RenderPass renderPass;
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline pipeline;
+    std::vector<vk::Framebuffer> swapChainFramebuffers;
 
     Window& wnd;
 

@@ -26,10 +26,15 @@ Graphics::Graphics(Window& wnd)
 
     initRenderPass();
     initPipeline();
+    
+    initFramebuffers();
 }
 
 Graphics::~Graphics()
 {
+    for(const auto& framebuffer : swapChainFramebuffers)
+        device.destroyFramebuffer(framebuffer);
+
     device.destroyPipeline(pipeline);
     device.destroyPipelineLayout(pipelineLayout);
     device.destroyRenderPass(renderPass);
@@ -632,5 +637,34 @@ void Graphics::initPipeline()
     catch(const std::runtime_error& e)
     {
         throw DOT_RUNTIME_WHAT(e); 
+    }
+}
+
+void Graphics::initFramebuffers()
+{
+    const size_t length = swapChainImageViews.size();
+    swapChainFramebuffers.resize(length);
+
+    for(size_t i = 0; i < length; i++)
+    {
+        vk::ImageView attachments[] = { swapChainImageViews[i]};
+
+        vk::FramebufferCreateInfo createInfo = {};
+        createInfo.sType = vk::StructureType::eFramebufferCreateInfo;
+        createInfo.renderPass = renderPass;
+        createInfo.attachmentCount = 1;
+        createInfo.pAttachments = attachments;
+        createInfo.width = swapChainExtent.width;
+        createInfo.height = swapChainExtent.height;
+        createInfo.layers = 1;
+
+        try
+        {
+            swapChainFramebuffers.emplace_back(device.createFramebuffer(createInfo));
+        }
+        catch(const std::runtime_error& e)
+        {
+            throw DOT_RUNTIME_WHAT(e);
+        }
     }
 }
