@@ -67,6 +67,11 @@ namespace dot
         inst.destroy();
     }
 
+    const vk::Instance& Instance::getVkInstance() const noexcept
+    {
+        return inst;
+    }
+
     std::vector<const char*> Instance::getRequiredExtensions() const noexcept
     {
         uint32_t glfwExtensionCount = 0;

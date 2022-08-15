@@ -16,6 +16,7 @@ namespace dot
         Instance& operator=(const Instance&) = delete;
         Instance& operator=(const Instance&&) = delete;
         ~Instance();
+        const vk::Instance& getVkInstance() const noexcept;
     private:
         std::vector<const char*> getRequiredExtensions() const noexcept;
         bool validationLayersSupported() const noexcept;
