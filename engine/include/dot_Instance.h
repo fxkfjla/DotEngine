@@ -11,6 +11,10 @@ namespace dot
     {
     public:
         Instance();
+        Instance(const Instance&) = delete;
+        Instance(const Instance&&) = delete;
+        Instance& operator=(const Instance&) = delete;
+        Instance& operator=(const Instance&&) = delete;
         ~Instance();
     private:
         std::vector<const char*> getRequiredExtensions() const noexcept;
