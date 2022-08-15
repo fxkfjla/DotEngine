@@ -11,6 +11,8 @@ class Graphics
 public:
     Graphics(Window&);
     ~Graphics();
+    void beginFrame();
+    void endFrame();
 private:
     void initVulkan();
     std::vector<const char*> getRequiredExtensions() const noexcept;
@@ -43,6 +45,13 @@ private:
 
     void initFramebuffers();
 
+    void initCommandPool();
+    void initCommandBuffer();
+    void recordCommandBuffer(const vk::CommandBuffer&, uint32_t imageIndex);
+
+    void initSyncObjects();
+    void destroySyncObjects();
+
     vk::Instance vkInst;
     vk::SurfaceKHR surface;
     vk::PhysicalDevice physicalDevice = nullptr;  // destroyed with VkInstance
@@ -57,9 +66,18 @@ private:
     vk::RenderPass renderPass;
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline pipeline;
+
     std::vector<vk::Framebuffer> swapChainFramebuffers;
+    // vk::
+
+    vk::CommandPool commandPool;
+    vk::CommandBuffer commandBuffer;
 
     Window& wnd;
+
+    vk::Semaphore imageAvailableSemaphore;
+    vk::Semaphore renderFinishedSemaphore;
+    vk::Fence inFlightFence;
 
     const std::vector<const char*> deviceExtensions =
     {

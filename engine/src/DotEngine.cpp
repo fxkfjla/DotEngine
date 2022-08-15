@@ -14,8 +14,10 @@ namespace Dot
         {
             glfwPollEvents();
 
+            gfx.beginFrame();
             updateFrame();
             renderFrame();
+            gfx.endFrame();
         }
     }
 

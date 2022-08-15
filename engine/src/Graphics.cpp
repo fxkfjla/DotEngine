@@ -28,10 +28,21 @@ Graphics::Graphics(Window& wnd)
     initPipeline();
     
     initFramebuffers();
+
+    initCommandPool();
+    initCommandBuffer();
+
+    initSyncObjects();
 }
 
 Graphics::~Graphics()
 {
+    device.waitIdle();
+
+    destroySyncObjects();
+
+    device.destroyCommandPool(commandPool);
+
     for(const auto& framebuffer : swapChainFramebuffers)
         device.destroyFramebuffer(framebuffer);
 
@@ -50,6 +61,50 @@ Graphics::~Graphics()
         vkInst.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
 
     vkInst.destroy();
+}
+
+void Graphics::beginFrame()
+{
+    if(device.waitForFences(1, &inFlightFence, VK_TRUE, UINT64_MAX) != vk::Result::eSuccess);
+    if(device.resetFences(1, &inFlightFence) != vk::Result::eSuccess);
+
+    uint32_t imageIndex = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE).value;
+
+    commandBuffer.reset();
+    recordCommandBuffer(commandBuffer, imageIndex);
+
+    vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
+    vk::Semaphore signalSemaphores[] = {renderFinishedSemaphore};
+    vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+
+    vk::SubmitInfo submitInfo = {};
+    submitInfo.sType = vk::StructureType::eSubmitInfo;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    if(graphicQueue.submit(1, &submitInfo, inFlightFence) != vk::Result::eSuccess);
+
+    vk::SwapchainKHR swapChains[] = {swapChain};
+    vk::PresentInfoKHR presentInfo = {};
+    presentInfo.sType = vk::StructureType::ePresentInfoKHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signalSemaphores;
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &imageIndex;
+    presentInfo.pResults = nullptr;
+
+    if(presentQueue.presentKHR(presentInfo) != vk::Result::eSuccess);
+}
+
+void Graphics::endFrame()
+{
+
 }
 
 void Graphics::initVulkan()
@@ -193,22 +248,29 @@ void Graphics::initSurface()
     VkSurfaceKHR vkSurface;
 
     if(glfwCreateWindowSurface(vkInst, wnd, nullptr, &vkSurface) != VK_SUCCESS)
-        throw DOT_RUNTIME("Faled to create window surface!");
+        throw DOT_RUNTIME("Failed to create window surface!");
 
     surface = vk::SurfaceKHR(vkSurface);
 }
 
 void Graphics::selectPhysicalDevice()
 {
-    std::vector<vk::PhysicalDevice> devices = vkInst.enumeratePhysicalDevices();
-
-    for(const auto& device : devices)
+    try
     {
-        if(deviceIsSupported(device))
+        std::vector<vk::PhysicalDevice> devices = vkInst.enumeratePhysicalDevices();
+
+        for(const auto& device : devices)
         {
-            physicalDevice = device;
-            break;
+            if(deviceIsSupported(device))
+            {
+                physicalDevice = device;
+                break;
+            }
         }
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
     }
 
     if(!physicalDevice)
@@ -468,15 +530,18 @@ void Graphics::initImageViews()
 
 void Graphics::initRenderPass()
 {
-    vk::AttachmentDescription colorAttachment = {};
-    colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = vk::SampleCountFlagBits::e1;
-    colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-    colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-    colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-    colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-    colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-    colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+    vk::AttachmentDescription colorAttachment
+    (
+        vk::AttachmentDescriptionFlagBits::eMayAlias,   // flags
+        swapChainImageFormat,                           // format
+        vk::SampleCountFlagBits::e1,                    // samples
+        vk::AttachmentLoadOp::eClear,                   // loadOp
+        vk::AttachmentStoreOp::eStore,                  // storeOp
+        vk::AttachmentLoadOp::eDontCare,                // stencilLoadOp
+        vk::AttachmentStoreOp::eDontCare,               // stencilStoreOp
+        vk::ImageLayout::eUndefined,                    // initialLayout
+        vk::ImageLayout::ePresentSrcKHR                 // finalLayout
+    );
 
     vk::AttachmentReference colorAttachmentRef = {};
     colorAttachmentRef.attachment = 0;
@@ -487,12 +552,22 @@ void Graphics::initRenderPass()
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
 
+    vk::SubpassDependency dependency = {};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL; 
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependency.srcAccessMask = vk::AccessFlagBits::eNone;
+    dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
     vk::RenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = vk::StructureType::eRenderPassCreateInfo;
     renderPassInfo.attachmentCount = 1;
     renderPassInfo.pAttachments = &colorAttachment;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
 
     try
     {
@@ -544,17 +619,17 @@ void Graphics::initPipeline()
         inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-        vk::Viewport viewport = {};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float)swapChainExtent.width;
-        viewport.height= (float)swapChainExtent.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
+        // vk::Viewport viewport = {};
+        // viewport.x = 0.0f;
+        // viewport.y = 0.0f;
+        // viewport.width = (float)swapChainExtent.width;
+        // viewport.height= (float)swapChainExtent.height;
+        // viewport.minDepth = 0.0f;
+        // viewport.maxDepth = 1.0f;
 
-        vk::Rect2D scissor = {};
-        scissor.offset = vk::Offset2D(0, 0);
-        scissor.extent = swapChainExtent;
+        // vk::Rect2D scissor = {};
+        // scissor.offset = vk::Offset2D(0, 0);
+        // scissor.extent = swapChainExtent;
 
         vk::PipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = vk::StructureType::ePipelineViewportStateCreateInfo;
@@ -647,7 +722,7 @@ void Graphics::initFramebuffers()
 
     for(size_t i = 0; i < length; i++)
     {
-        vk::ImageView attachments[] = { swapChainImageViews[i]};
+        vk::ImageView attachments[] = {swapChainImageViews[i]};
 
         vk::FramebufferCreateInfo createInfo = {};
         createInfo.sType = vk::StructureType::eFramebufferCreateInfo;
@@ -660,11 +735,132 @@ void Graphics::initFramebuffers()
 
         try
         {
-            swapChainFramebuffers.emplace_back(device.createFramebuffer(createInfo));
+            swapChainFramebuffers[i] = device.createFramebuffer(createInfo);
         }
         catch(const std::runtime_error& e)
         {
             throw DOT_RUNTIME_WHAT(e);
         }
     }
+}
+
+void Graphics::initCommandPool()
+{
+    vk::CommandPoolCreateInfo createInfo = {};
+    createInfo.sType = vk::StructureType::eCommandPoolCreateInfo;
+    createInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    createInfo.queueFamilyIndex = queueIndices.graphicFamily.value();
+
+    try
+    {
+        commandPool = device.createCommandPool(createInfo);
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
+    }
+}
+
+void Graphics::initCommandBuffer()
+{
+    vk::CommandBufferAllocateInfo allocInfo = {};
+    allocInfo.sType = vk::StructureType::eCommandBufferAllocateInfo;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandBufferCount = 1;
+
+    try
+    {
+        commandBuffer = device.allocateCommandBuffers(allocInfo).front();
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
+    }
+}
+
+void Graphics::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex)
+{
+    vk::CommandBufferBeginInfo commandBufferBeginInfo = {};
+    commandBufferBeginInfo.sType = vk::StructureType::eCommandBufferBeginInfo;
+    commandBufferBeginInfo.pInheritanceInfo = nullptr;
+
+    try
+    {
+        commandBuffer.begin(commandBufferBeginInfo);
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
+    }
+
+    vk::ClearValue clearColor;
+
+    vk::RenderPassBeginInfo renderPassBeginInfo = {};
+    renderPassBeginInfo.sType = vk::StructureType::eRenderPassBeginInfo;
+    renderPassBeginInfo.renderPass = renderPass;
+    renderPassBeginInfo.framebuffer = swapChainFramebuffers[imageIndex];
+    renderPassBeginInfo.renderArea.offset = vk::Offset2D(0, 0);
+    renderPassBeginInfo.renderArea.extent = swapChainExtent;
+    renderPassBeginInfo.clearValueCount = 1;
+    renderPassBeginInfo.pClearValues = &clearColor;
+
+    commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+
+    // change
+    vk::Viewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapChainExtent.width;
+    viewport.height = (float)swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vk::Rect2D scissor = {};
+    scissor.offset = vk::Offset2D(0, 0);
+    scissor.extent = swapChainExtent;
+
+    commandBuffer.setViewport(0, viewport);
+    commandBuffer.setScissor(0, scissor);
+
+    commandBuffer.draw(3, 1, 0, 0);
+
+    commandBuffer.endRenderPass();
+
+    try
+    {
+        commandBuffer.end();
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
+    }
+}
+
+void Graphics::initSyncObjects()
+{
+    vk::SemaphoreCreateInfo semInfo;
+
+    vk::FenceCreateInfo fenceInfo;
+    fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled;
+
+    try
+    {
+        imageAvailableSemaphore = device.createSemaphore(semInfo);
+        renderFinishedSemaphore = device.createSemaphore(semInfo);
+        inFlightFence = device.createFence(fenceInfo);
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw DOT_RUNTIME_WHAT(e);
+    }
+}
+
+void Graphics::destroySyncObjects()
+{
+    device.destroySemaphore(imageAvailableSemaphore);
+    device.destroySemaphore(renderFinishedSemaphore);
+    device.destroyFence(inFlightFence);
 }
