@@ -3,7 +3,7 @@
 #include "Window.h"
 #include "Graphics.h"
 
-namespace Dot
+namespace dot
 {
     class Engine
     {

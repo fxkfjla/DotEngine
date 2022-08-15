@@ -1,5 +1,5 @@
 #include "Graphics.h"
-#include "DotException.h"
+#include "dot_Exception.h"
 #include "Shader.h"
 
 #include <iostream>
@@ -619,14 +619,6 @@ void Graphics::initPipeline()
         inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-        // vk::Viewport viewport = {};
-        // viewport.x = 0.0f;
-        // viewport.y = 0.0f;
-        // viewport.width = (float)swapChainExtent.width;
-        // viewport.height= (float)swapChainExtent.height;
-        // viewport.minDepth = 0.0f;
-        // viewport.maxDepth = 1.0f;
-
         // vk::Rect2D scissor = {};
         // scissor.offset = vk::Offset2D(0, 0);
         // scissor.extent = swapChainExtent;
@@ -809,14 +801,15 @@ void Graphics::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint3
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-    // change
-    vk::Viewport viewport = {};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)swapChainExtent.width;
-    viewport.height = (float)swapChainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    viewport = vk::Viewport
+    (
+        0.0f,                           // x
+        0.0f,                           // y
+        (float)swapChainExtent.width,   // width
+        (float)swapChainExtent.height,  // height
+        0.0f,                           // minDepth
+        1.0f                            // maxDepth
+    );
 
     vk::Rect2D scissor = {};
     scissor.offset = vk::Offset2D(0, 0);

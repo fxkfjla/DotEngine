@@ -1,6 +1,6 @@
 #include "Window.h"
 
-#include "DotException.h"
+#include "dot_Exception.h"
 
 Window::Window()
 {

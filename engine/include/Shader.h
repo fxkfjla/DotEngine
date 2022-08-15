@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DotVulkan.h"
+#include "dot_Vulkan.h"
 
 #include <string>
 #include <fstream>

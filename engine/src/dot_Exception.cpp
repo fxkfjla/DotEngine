@@ -1,8 +1,8 @@
-#include "DotException.h"
+#include "dot_Exception.h"
 
 #include <sstream>
 
-namespace Dot
+namespace dot
 {
     RuntimeError::RuntimeError(std::string file, int line) noexcept
         : file(file), line(line), std::runtime_error(""){}

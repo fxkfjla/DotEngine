@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Dot
+namespace dot
 {
     class RuntimeError : public std::runtime_error
     {
@@ -25,5 +25,5 @@ namespace Dot
     };
 }
 
-#define DOT_RUNTIME(str) Dot::RuntimeError(__FILE__, __LINE__, str);
-#define DOT_RUNTIME_WHAT(err) Dot::RuntimeError(__FILE__, __LINE__, err.what());
+#define DOT_RUNTIME(str) dot::RuntimeError(__FILE__, __LINE__, str);
+#define DOT_RUNTIME_WHAT(err) dot::RuntimeError(__FILE__, __LINE__, err.what());

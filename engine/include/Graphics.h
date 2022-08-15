@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DotVulkan.h"
+#include "dot_Vulkan.h"
 #include "Window.h"
 
 #include <vector>
@@ -68,7 +68,7 @@ private:
     vk::Pipeline pipeline;
 
     std::vector<vk::Framebuffer> swapChainFramebuffers;
-    // vk::
+    vk::Viewport viewport;
 
     vk::CommandPool commandPool;
     vk::CommandBuffer commandBuffer;

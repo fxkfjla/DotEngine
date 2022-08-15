@@ -1,6 +1,6 @@
-#include "DotEngine.h"
+#include "dot_Engine.h"
 
-namespace Dot
+namespace dot
 {
     Engine::Engine(Window& wnd)
         : wnd(wnd), gfx(wnd)

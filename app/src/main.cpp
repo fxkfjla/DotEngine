@@ -1,18 +1,18 @@
-#include "DotEngine.h"
-#include "DotException.h"
+#include "dot_Engine.h"
+#include "dot_Exception.h"
 
 #include <iostream>
 
 int main()
 {
     Window wnd;
-    Dot::Engine engine(wnd);
+    dot::Engine engine(wnd);
 
     try
     {
         engine.run();
     }
-    catch(const Dot::RuntimeError& e)
+    catch(const dot::RuntimeError& e)
     {
         std::cerr << e.what() << '\n';
     }
