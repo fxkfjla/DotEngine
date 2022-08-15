@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dot_Vulkan.h"
-#include "dot_Instance.h"
+#include "dot_Device.h"
 
 #include "Window.h"
 
@@ -17,7 +17,7 @@ public:
     void beginFrame();
     void endFrame();
 private:
-    dot::Instance inst;
+    dot::Device device;
 
     Window& wnd;
 };
