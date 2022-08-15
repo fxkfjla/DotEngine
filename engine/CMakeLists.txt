@@ -8,6 +8,7 @@ set(SRC
     src/Window.cpp
 	src/dot_Exception.cpp
 	src/Shader.cpp
+	src/dot_Instance.cpp
 )
 
 find_package(Vulkan REQUIRED)
