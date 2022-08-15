@@ -4,11 +4,12 @@ project(DotEngine VERSION 0.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(SRC 
 	src/dot_Engine.cpp
-    src/Graphics.cpp
-    src/Window.cpp
-	src/dot_Exception.cpp
-	src/Shader.cpp
 	src/dot_Instance.cpp
+	src/dot_Device.cpp
+	src/dot_Exception.cpp
+    src/Window.cpp
+    src/Graphics.cpp
+	src/Shader.cpp
 )
 
 find_package(Vulkan REQUIRED)
