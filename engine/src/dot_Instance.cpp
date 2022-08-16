@@ -28,7 +28,7 @@ namespace dot
         createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
         createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
-        if(validationLayersEnabled)
+        if(_validationLayersEnabled)
         {
             createDebugMessengerCreateInfo();
 
@@ -52,7 +52,7 @@ namespace dot
             throw DOT_RUNTIME_WHAT(e);
         }
 
-        if(validationLayersEnabled)
+        if(_validationLayersEnabled)
         {
             createDebugMessenger();
             displayExtensionsInfo(requiredExtensions);
@@ -61,7 +61,7 @@ namespace dot
 
     Instance::~Instance()
     {
-        if(validationLayersEnabled)
+        if(_validationLayersEnabled)
             inst.destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
 
         inst.destroy();
@@ -72,13 +72,23 @@ namespace dot
         return inst;
     }
 
+    bool Instance::validationLayersEnabled() const noexcept
+    {
+        return _validationLayersEnabled;
+    }
+
+    const std::vector<const char*>& Instance::getValidationLayers() const noexcept
+    {
+        return validationLayers;
+    }
+
     std::vector<const char*> Instance::getRequiredExtensions() const noexcept
     {
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        if(validationLayersEnabled)
+        if(_validationLayersEnabled)
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
         return extensions;

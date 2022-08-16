@@ -17,6 +17,8 @@ namespace dot
         Instance& operator=(const Instance&&) = delete;
         ~Instance();
         const vk::Instance& getVkInstance() const noexcept;
+        bool validationLayersEnabled() const noexcept;
+        const std::vector<const char*>& getValidationLayers() const noexcept;
     private:
         std::vector<const char*> getRequiredExtensions() const noexcept;
         bool validationLayersSupported() const noexcept;
@@ -29,9 +31,9 @@ namespace dot
         vk::DispatchLoaderDynamic dldi;
 
         #ifdef NDEBUG
-            const bool validationLayersEnabled = false;
+            const bool _validationLayersEnabled = false;
         #else
-            const bool validationLayersEnabled = true;
+            const bool _validationLayersEnabled = true;
         #endif
         vk::DebugUtilsMessengerCreateInfoEXT debugMessengerInfo = {};
         vk::DebugUtilsMessengerEXT debugMessenger;
