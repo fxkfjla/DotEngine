@@ -20,6 +20,7 @@ namespace dot
     private:
         void createSwapchain();
         void createImageViews();
+        void createRenderPass();
         vk::Extent2D getExtent(const vk::SurfaceCapabilitiesKHR&) const noexcept;
         vk::SurfaceFormatKHR getSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>&) const noexcept; 
         vk::PresentModeKHR getPresentMode(const std::vector<vk::PresentModeKHR>&) const noexcept;
@@ -31,6 +32,7 @@ namespace dot
         vk::SwapchainKHR swapchain;
         std::vector<vk::Image> images;
         std::vector<vk::ImageView> imageViews;
+        vk::RenderPass renderPass;
 
         Device& device;
         Window& wnd;

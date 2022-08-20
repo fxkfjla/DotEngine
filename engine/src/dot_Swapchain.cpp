@@ -11,10 +11,13 @@ namespace dot
     {
         createSwapchain();
         createImageViews();
+        createRenderPass();
     }
 
     Swapchain::~Swapchain()
     {
+        device.getVkDevice().destroyRenderPass(renderPass);
+
         for(const auto& imageView : imageViews)
             device.getVkDevice().destroyImageView(imageView);
 
@@ -170,4 +173,65 @@ namespace dot
             }
         }
     }
+
+    void Swapchain::createRenderPass()
+    {
+        vk::AttachmentDescription colorAttachment
+        (
+            vk::AttachmentDescriptionFlagBits::eMayAlias,   // flags
+            imageFormat,                                    // format
+            vk::SampleCountFlagBits::e1,                    // samples
+            vk::AttachmentLoadOp::eClear,                   // loadOp
+            vk::AttachmentStoreOp::eStore,                  // storeOp
+            vk::AttachmentLoadOp::eDontCare,                // stencilLoadOp
+            vk::AttachmentStoreOp::eDontCare,               // stencilStoreOp
+            vk::ImageLayout::eUndefined,                    // initialLayout
+            vk::ImageLayout::ePresentSrcKHR                 // finalLayout
+        );
+
+        vk::AttachmentReference colorAttachmentRef
+        (
+            0,                                          // attachment
+            vk::ImageLayout::eColorAttachmentOptimal    // layout
+        );
+
+        auto colorAttachments = {colorAttachment};
+
+        vk::SubpassDescription subpass
+        (
+            vk::SubpassDescriptionFlags(0U),    // flags
+            vk::PipelineBindPoint::eGraphics,   // pipelineBindPoint
+            {},                                 // inputAttachments
+            colorAttachmentRef                  // colorAttachments
+        );
+
+        vk::SubpassDependency dependency
+        (
+            0U,                                                 // srcSubpass 
+            0U,                                                 // dstSubpass
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,  // srcStageMask
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,  // dstStageMask
+            vk::AccessFlagBits::eNone,                          // srcAccessMask      
+            vk::AccessFlagBits::eColorAttachmentWrite,          // dstAccessMask
+            vk::DependencyFlagBits::eByRegion
+        );
+
+        vk::RenderPassCreateInfo createInfo
+        (
+            vk::RenderPassCreateFlags(0U),  // flags
+            colorAttachment,                // attachments
+            subpass,                        // subpasses
+            dependency                      // dependencies
+        );
+
+        try
+        {
+            renderPass = device.getVkDevice().createRenderPass(createInfo);
+        }
+        catch(const std::runtime_error& e)
+        {
+            throw DOT_RUNTIME_WHAT(e);
+        }
+    }
+
 }
