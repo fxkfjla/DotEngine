@@ -16,6 +16,7 @@ namespace dot
         Instance& operator=(const Instance&) = delete;
         Instance& operator=(const Instance&&) = delete;
         ~Instance();
+        operator const vk::Instance&() const noexcept;
         const vk::Instance& getVkInstance() const noexcept;
         bool validationLayersEnabled() const noexcept;
         const std::vector<const char*>& getValidationLayers() const noexcept;

@@ -4,8 +4,6 @@
 #include <limits>
 #include <algorithm>
 
-#include <iostream>
-
 namespace dot
 {
     Swapchain::Swapchain(Window& wnd, Device& device)
@@ -21,6 +19,11 @@ namespace dot
             device.getVkDevice().destroyImageView(imageView);
 
         device.getVkDevice().destroySwapchainKHR(swapchain);
+    }
+
+    Swapchain::operator const vk::SwapchainKHR&() const noexcept
+    {
+        return swapchain;
     }
 
     void Swapchain::createSwapchain()

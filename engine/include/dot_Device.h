@@ -38,6 +38,7 @@ namespace dot
         Device& operator=(const Device&) = delete;
         Device& operator=(const Device&&) = delete;
         ~Device();
+        operator const vk::Device&() const noexcept;
         const SwapchainSupportDetails& getSwapchainDetails() const noexcept;
         const vk::SurfaceKHR& getSurface() const noexcept;
         const QueueFamilyIndices& getQueueFamiliyIndices() const noexcept;

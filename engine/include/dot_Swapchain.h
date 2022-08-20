@@ -16,6 +16,7 @@ namespace dot
         Swapchain& operator=(const Swapchain&) = delete;
         Swapchain& operator=(const Swapchain&&) = delete;
         ~Swapchain();
+        operator const vk::SwapchainKHR&() const noexcept;
     private:
         void createSwapchain();
         void createImageViews();

@@ -67,6 +67,11 @@ namespace dot
         inst.destroy();
     }
 
+    Instance::operator const vk::Instance&() const noexcept
+    {
+        return inst;
+    }
+
     const vk::Instance& Instance::getVkInstance() const noexcept
     {
         return inst;

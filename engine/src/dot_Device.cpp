@@ -19,6 +19,11 @@ namespace dot
         device.destroy();
         inst.getVkInstance().destroySurfaceKHR(surface);
     }
+    
+    Device::operator const vk::Device&() const noexcept
+    {
+        return device;
+    }
 
     const Device::SwapchainSupportDetails& Device::getSwapchainDetails() const noexcept
     {
