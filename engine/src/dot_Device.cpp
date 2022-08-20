@@ -20,6 +20,26 @@ namespace dot
         inst.getVkInstance().destroySurfaceKHR(surface);
     }
 
+    const Device::SwapchainSupportDetails& Device::getSwapchainDetails() const noexcept
+    {
+        return swapchainDetails;
+    }
+
+    const vk::SurfaceKHR& Device::getSurface() const noexcept
+    {
+        return surface;
+    }
+
+    const Device::QueueFamilyIndices& Device::getQueueFamiliyIndices() const noexcept
+    {
+        return queueIndices;
+    }
+
+    const vk::Device& Device::getVkDevice() const noexcept
+    {
+        return device;
+    }
+
     void Device::createSurface()
     {
         VkSurfaceKHR vkSurface;
@@ -145,6 +165,7 @@ namespace dot
             queueCreateInfos            // pQueueCreateInfos
         );
         deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
         if(inst.validationLayersEnabled())
