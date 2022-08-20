@@ -2,6 +2,7 @@
 
 #include "dot_Vulkan.h"
 #include "dot_Device.h"
+#include "dot_Swapchain.h"
 
 #include "Window.h"
 
@@ -18,6 +19,7 @@ public:
     void endFrame();
 private:
     dot::Device device;
+    dot::Swapchain swapchain;
 
     Window& wnd;
 };

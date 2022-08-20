@@ -6,6 +6,7 @@ set(SRC
 	src/dot_Engine.cpp
 	src/dot_Instance.cpp
 	src/dot_Device.cpp
+	src/dot_Swapchain.cpp
 	src/dot_Exception.cpp
     src/Window.cpp
     src/Graphics.cpp
