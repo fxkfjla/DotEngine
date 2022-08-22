@@ -29,6 +29,11 @@ namespace dot
         return swapchain;
     }
 
+    const vk::RenderPass& Swapchain::getRenderPass() const noexcept
+    {
+        return renderPass;
+    }
+
     void Swapchain::createSwapchain()
     {
         auto swapchainDetails = device.getSwapchainDetails();

@@ -10,13 +10,14 @@ namespace dot
     class Swapchain
     {
     public:
-        Swapchain(Window&,Device&);
+        Swapchain(Window&, Device&);
         Swapchain(const Swapchain&) = delete;
         Swapchain(const Swapchain&&) = delete;
         Swapchain& operator=(const Swapchain&) = delete;
         Swapchain& operator=(const Swapchain&&) = delete;
         ~Swapchain();
         operator const vk::SwapchainKHR&() const noexcept;
+        const vk::RenderPass& getRenderPass() const noexcept;
     private:
         void createSwapchain();
         void createImageViews();
