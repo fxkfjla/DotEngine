@@ -54,11 +54,14 @@ namespace dot
 
         void createLogicalDevice();
 
+        void createCmdPool();
+
         vk::SurfaceKHR surface;
         vk::PhysicalDevice physicalDevice;
         vk::Device device;
         vk::Queue graphicQueue;
         vk::Queue presentQueue;
+        vk::CommandPool cmdPoolGfx;
 
         const std::vector<const char*> deviceExtensions =
         {

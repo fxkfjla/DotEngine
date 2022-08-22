@@ -12,10 +12,12 @@ namespace dot
         createSurface();
         selectPhysicalDevice();
         createLogicalDevice();
+        createCmdPool();
     }
 
     Device::~Device()
     {
+        device.destroyCommandPool(cmdPoolGfx);
         device.destroy();
         inst.getVkInstance().destroySurfaceKHR(surface);
     }
@@ -194,5 +196,23 @@ namespace dot
         
         graphicQueue = device.getQueue(0, queueIndices.graphicFamily.value());
         presentQueue = device.getQueue(0, queueIndices.presentFamily.value());
+    }
+
+    void Device::createCmdPool()
+    {
+        vk::CommandPoolCreateInfo createInfo
+        (
+            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,     // flags
+            queueIndices.graphicFamily.value()                      // queueFamilyIndex
+        );
+
+        try
+        {
+            cmdPoolGfx = device.createCommandPool(createInfo);
+        }
+        catch(const std::runtime_error& e)
+        {
+            throw DOT_RUNTIME_WHAT(e);
+        }
     }
 }
