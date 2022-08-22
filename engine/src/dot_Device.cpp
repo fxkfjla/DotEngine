@@ -145,7 +145,9 @@ namespace dot
     void Device::createLogicalDevice()
     {
         std::set<uint32_t> uniqueQueues = {queueIndices.graphicFamily.value(), queueIndices.presentFamily.value()};
+
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+        queueCreateInfos.reserve(uniqueQueues.size());
 
         float queuePriorities[] = {1.0f};
         for(auto queue : uniqueQueues)
