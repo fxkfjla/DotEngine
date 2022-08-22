@@ -9,9 +9,11 @@
 class Shader
 {
 public:
-    Shader(const std::string& filename, const vk::Device& device);
+    Shader(const vk::Device&);
+    Shader(const vk::Device&, const std::string& filename);
     ~Shader();
-    void create();
+    operator const vk::ShaderModule&() const noexcept;
+    void read(const std::string& filename);
     const vk::ShaderModule& getModule() const noexcept;
 private:
     std::vector<char> readFile() const;

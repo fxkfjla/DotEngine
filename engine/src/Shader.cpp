@@ -1,10 +1,11 @@
 #include "Shader.h"
 #include "dot_Exception.h"
 
-#include <iostream>
+Shader::Shader(const vk::Device& device)
+    : device(device){}
 
-Shader::Shader(const std::string& filename, const vk::Device& device)
-    : filename(filename), device(device)
+Shader::Shader(const vk::Device& device, const std::string& filename)
+    : device(device), filename(filename)
 {
     try
     {
@@ -20,6 +21,26 @@ Shader::Shader(const std::string& filename, const vk::Device& device)
 Shader::~Shader()
 {
     device.destroyShaderModule(shaderModule);
+}
+
+Shader::operator const vk::ShaderModule&() const noexcept
+{
+    return shaderModule;
+}
+
+void Shader::read(const std::string& filename)
+{
+    this->filename = filename;
+
+    try
+    {
+        data = readFile();
+        shaderModule = createShaderModule();
+    }
+    catch(const std::runtime_error& e)
+    {
+        throw e;
+    }
 }
 
 std::vector<char> Shader::readFile() const
