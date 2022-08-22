@@ -12,10 +12,14 @@ namespace dot
         createSwapchain();
         createImageViews();
         createRenderPass();
+        createFramebuffers();
     }
 
     Swapchain::~Swapchain()
     {
+        for(const auto& framebuffer : framebuffers)
+            device.getVkDevice().destroyFramebuffer(framebuffer);
+
         device.getVkDevice().destroyRenderPass(renderPass);
 
         for(const auto& imageView : imageViews)
@@ -239,4 +243,31 @@ namespace dot
         }
     }
 
+    void Swapchain::createFramebuffers()
+    {
+        const size_t length = imageViews.size();
+        framebuffers.reserve(length);
+
+        for(size_t i = 0; i < length; i++)
+        {
+            vk::FramebufferCreateInfo createInfo
+            (
+                vk::FramebufferCreateFlags(0U), // flags
+                renderPass,                     // renderPass
+                imageViews[i],                  // attachments
+                extent.width,                   // width
+                extent.height,                  // height
+                1                               // layers 
+            );
+
+            try
+            {
+                framebuffers.emplace_back(device.getVkDevice().createFramebuffer(createInfo));
+            }
+            catch(const std::runtime_error& e)
+            {
+                throw DOT_RUNTIME_WHAT(e);
+            }
+        }
+    }
 }
