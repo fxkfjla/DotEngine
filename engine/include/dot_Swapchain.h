@@ -17,7 +17,10 @@ namespace dot
         Swapchain& operator=(const Swapchain&&) = delete;
         ~Swapchain();
         operator const vk::SwapchainKHR&() const noexcept;
+        const vk::Extent2D& getExtent() const noexcept;
         const vk::RenderPass& getRenderPass() const noexcept;
+        const vk::Framebuffer& getFramebuffer(size_t) const noexcept;
+        size_t getMaxFramesInFlight() const noexcept;
     private:
         void createSwapchain();
         void createImageViews();
@@ -27,6 +30,8 @@ namespace dot
         vk::SurfaceFormatKHR getSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>&) const noexcept; 
         vk::PresentModeKHR getPresentMode(const std::vector<vk::PresentModeKHR>&) const noexcept;
 
+        Window& wnd;
+        Device& device;
         vk::Extent2D extent;
         vk::SurfaceFormatKHR surfaceFormat;
         vk::PresentModeKHR presentMode;
@@ -37,7 +42,6 @@ namespace dot
         vk::RenderPass renderPass;
         std::vector<vk::Framebuffer> framebuffers;
 
-        Device& device;
-        Window& wnd;
+        size_t maxFramesInFlight;
     };
 }

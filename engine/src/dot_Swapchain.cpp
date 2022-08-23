@@ -33,9 +33,24 @@ namespace dot
         return swapchain;
     }
 
+    const vk::Extent2D& Swapchain::getExtent() const noexcept
+    {
+        return extent;
+    }
+
     const vk::RenderPass& Swapchain::getRenderPass() const noexcept
     {
         return renderPass;
+    }
+
+    const vk::Framebuffer& Swapchain::getFramebuffer(size_t index) const noexcept
+    {
+        return framebuffers[index];
+    }
+
+    size_t Swapchain::getMaxFramesInFlight() const noexcept
+    {
+        return maxFramesInFlight;
     }
 
     void Swapchain::createSwapchain()
@@ -49,6 +64,7 @@ namespace dot
         presentMode = getPresentMode(swapchainDetails.modes);
 
         uint32_t imageCount = swapchainDetails.capabilities.minImageCount + 1;
+        maxFramesInFlight = imageCount;
 
         if(swapchainDetails.capabilities.maxImageCount > 0 && imageCount > swapchainDetails.capabilities.maxImageCount)
             imageCount = swapchainDetails.capabilities.maxImageCount;
