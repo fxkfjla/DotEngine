@@ -46,7 +46,7 @@ namespace dot
         operator const vk::Pipeline&() const noexcept;
         ~Pipeline();
 
-        static PipelineConfig& defaultConfig(PipelineConfig&, const vk::RenderPass&);
+        static void defaultConfig(PipelineConfig&, const vk::RenderPass&);
     private:
         void createLayout(const PipelineConfig&);
         void createPipeline(const PipelineConfig&);

@@ -98,7 +98,7 @@ namespace dot
         }
     }
 
-    PipelineConfig& Pipeline::defaultConfig(PipelineConfig& pipelineConfig, const vk::RenderPass& renderPass)
+    void Pipeline::defaultConfig(PipelineConfig& pipelineConfig, const vk::RenderPass& renderPass)
     {
         pipelineConfig.inputAssemblyStateInfo = vk::PipelineInputAssemblyStateCreateInfo
         (
@@ -170,7 +170,5 @@ namespace dot
         pipelineConfig.renderPass = renderPass;
 
         pipelineConfig.subpass = 0;
-
-        return pipelineConfig;
     }
 }
