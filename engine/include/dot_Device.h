@@ -43,6 +43,7 @@ namespace dot
         const vk::SurfaceKHR& getSurface() const noexcept;
         const QueueFamilyIndices& getQueueFamiliyIndices() const noexcept;
         const vk::Device& getVkDevice() const noexcept;
+        const vk::CommandPool& getCmdPoolGfx() const noexcept;
     private:
         void createSurface();
 
@@ -54,7 +55,7 @@ namespace dot
 
         void createLogicalDevice();
 
-        void createCmdPool();
+        void createCmdPoolGfx();
 
         vk::SurfaceKHR surface;
         vk::PhysicalDevice physicalDevice;

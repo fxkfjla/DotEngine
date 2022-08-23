@@ -12,7 +12,7 @@ namespace dot
         createSurface();
         selectPhysicalDevice();
         createLogicalDevice();
-        createCmdPool();
+        createCmdPoolGfx();
     }
 
     Device::~Device()
@@ -45,6 +45,10 @@ namespace dot
     const vk::Device& Device::getVkDevice() const noexcept
     {
         return device;
+    }
+    const vk::CommandPool& Device::getCmdPoolGfx() const noexcept
+    {
+        return cmdPoolGfx;
     }
 
     void Device::createSurface()
@@ -198,7 +202,7 @@ namespace dot
         presentQueue = device.getQueue(0, queueIndices.presentFamily.value());
     }
 
-    void Device::createCmdPool()
+    void Device::createCmdPoolGfx()
     {
         vk::CommandPoolCreateInfo createInfo
         (
