@@ -13,10 +13,13 @@ namespace dot
         createImageViews();
         createRenderPass();
         createFramebuffers();
+        createSyncObjects();
     }
 
     Swapchain::~Swapchain()
     {
+        destroySyncObjects();
+
         for(const auto& framebuffer : framebuffers)
             device.getVkDevice().destroyFramebuffer(framebuffer);
 
@@ -26,6 +29,42 @@ namespace dot
             device.getVkDevice().destroyImageView(imageView);
 
         device.getVkDevice().destroySwapchainKHR(swapchain);
+    }
+
+    uint32_t Swapchain::acquireNextImage() const
+    {
+        device.getVkDevice().waitForFences(imageInFlightFences[currentFrameInFlight], VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+        return device.getVkDevice().acquireNextImageKHR(swapchain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrameInFlight]).value;
+    }
+
+    void Swapchain::submitCmdBuffer(const vk::CommandBuffer& cmdBuffer, uint32_t imageIndex)
+    {
+        device.getVkDevice().waitForFences(imageInFlightFences[currentFrameInFlight], VK_TRUE, std::numeric_limits<uint64_t>::max());
+
+        vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+        vk::SubmitInfo submitInfo
+        (
+            imageAvailableSemaphores[currentFrameInFlight], // waitSemaphores
+            waitStages,                                     // waitDstStageMask
+            cmdBuffer,                                      // commandBuffers
+            renderFinishedSemaphores[currentFrameInFlight]  // signalSemaphores
+        );
+
+        device.getVkDevice().resetFences(imageInFlightFences[currentFrameInFlight]);
+
+        device.getGfxQueue().submit(submitInfo, imageInFlightFences[currentFrameInFlight]);
+
+        vk::PresentInfoKHR presentInfo
+        (
+            renderFinishedSemaphores[currentFrameInFlight], // waitSemaphores
+            swapchain,                                      // swapchains
+            imageIndex                                      // imageIndices
+        );
+
+        device.getPresentQueue().presentKHR(presentInfo);
+
+        currentFrameInFlight = (currentFrameInFlight + 1) % maxFramesInFlight;
     }
 
     Swapchain::operator const vk::SwapchainKHR&() const noexcept
@@ -64,10 +103,11 @@ namespace dot
         presentMode = getPresentMode(swapchainDetails.modes);
 
         uint32_t imageCount = swapchainDetails.capabilities.minImageCount + 1;
-        maxFramesInFlight = imageCount;
 
         if(swapchainDetails.capabilities.maxImageCount > 0 && imageCount > swapchainDetails.capabilities.maxImageCount)
             imageCount = swapchainDetails.capabilities.maxImageCount;
+
+        maxFramesInFlight = imageCount;
 
         uint32_t queueFamilyIndices[] = {queueIndices.graphicFamily.value(), queueIndices.presentFamily.value()};
         
@@ -238,7 +278,7 @@ namespace dot
             vk::PipelineStageFlagBits::eColorAttachmentOutput,  // dstStageMask
             vk::AccessFlagBits::eNone,                          // srcAccessMask      
             vk::AccessFlagBits::eColorAttachmentWrite,          // dstAccessMask
-            vk::DependencyFlagBits::eByRegion
+            vk::DependencyFlagBits::eByRegion                   // dependencyFlags
         );
 
         vk::RenderPassCreateInfo createInfo
@@ -284,6 +324,40 @@ namespace dot
             {
                 throw DOT_RUNTIME_WHAT(e);
             }
+        }
+    }
+    
+    void Swapchain::createSyncObjects()
+    {
+        imageAvailableSemaphores.reserve(maxFramesInFlight);
+        renderFinishedSemaphores.reserve(maxFramesInFlight);
+        imageInFlightFences.reserve(maxFramesInFlight);
+
+        vk::SemaphoreCreateInfo semaphoreInfo;
+        vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
+
+        try
+        {
+            for(size_t i = 0; i < maxFramesInFlight; i++)
+            {
+                imageAvailableSemaphores.emplace_back(device.getVkDevice().createSemaphore(semaphoreInfo));
+                renderFinishedSemaphores.emplace_back(device.getVkDevice().createSemaphore(semaphoreInfo));
+                imageInFlightFences.emplace_back(device.getVkDevice().createFence(fenceInfo));
+            }
+        }
+        catch(const std::runtime_error& e)
+        {
+            throw DOT_RUNTIME_WHAT(e);
+        }
+    }
+
+    void Swapchain::destroySyncObjects()
+    {
+        for(size_t i = 0; i < maxFramesInFlight; i++)
+        {
+            device.getVkDevice().destroySemaphore(imageAvailableSemaphores[i]);
+            device.getVkDevice().destroySemaphore(renderFinishedSemaphores[i]);
+            device.getVkDevice().destroyFence(imageInFlightFences[i]);
         }
     }
 }

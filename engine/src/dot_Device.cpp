@@ -46,6 +46,17 @@ namespace dot
     {
         return device;
     }
+
+    const vk::Queue& Device::getGfxQueue() const noexcept
+    {
+        return graphicQueue;
+    }
+
+    const vk::Queue& Device::getPresentQueue() const noexcept
+    {
+        return presentQueue;
+    }
+
     const vk::CommandPool& Device::getCmdPoolGfx() const noexcept
     {
         return cmdPoolGfx;

@@ -16,6 +16,8 @@ namespace dot
         Swapchain& operator=(const Swapchain&) = delete;
         Swapchain& operator=(const Swapchain&&) = delete;
         ~Swapchain();
+        uint32_t acquireNextImage() const;
+        void submitCmdBuffer(const vk::CommandBuffer&, uint32_t index);
         operator const vk::SwapchainKHR&() const noexcept;
         const vk::Extent2D& getExtent() const noexcept;
         const vk::RenderPass& getRenderPass() const noexcept;
@@ -26,6 +28,8 @@ namespace dot
         void createImageViews();
         void createRenderPass();
         void createFramebuffers();
+        void createSyncObjects();
+        void destroySyncObjects();
         vk::Extent2D getExtent(const vk::SurfaceCapabilitiesKHR&) const noexcept;
         vk::SurfaceFormatKHR getSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>&) const noexcept; 
         vk::PresentModeKHR getPresentMode(const std::vector<vk::PresentModeKHR>&) const noexcept;
@@ -42,6 +46,11 @@ namespace dot
         vk::RenderPass renderPass;
         std::vector<vk::Framebuffer> framebuffers;
 
+        std::vector<vk::Semaphore> imageAvailableSemaphores;
+        std::vector<vk::Semaphore> renderFinishedSemaphores;
+        std::vector<vk::Fence> imageInFlightFences;
+
         size_t maxFramesInFlight;
+        size_t currentFrameInFlight = 0;
     };
 }

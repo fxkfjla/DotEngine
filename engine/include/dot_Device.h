@@ -43,6 +43,8 @@ namespace dot
         const vk::SurfaceKHR& getSurface() const noexcept;
         const QueueFamilyIndices& getQueueFamiliyIndices() const noexcept;
         const vk::Device& getVkDevice() const noexcept;
+        const vk::Queue& getGfxQueue() const noexcept;
+        const vk::Queue& getPresentQueue() const noexcept;
         const vk::CommandPool& getCmdPoolGfx() const noexcept;
     private:
         void createSurface();
