@@ -15,8 +15,7 @@ namespace dot
             glfwPollEvents();
 
             gfx.beginFrame();
-            updateFrame();
-            renderFrame();
+            gfx.drawFrame();
             gfx.endFrame();
         }
     }
