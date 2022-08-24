@@ -2,8 +2,7 @@
 
 #include "dot_Vulkan.h"
 #include "dot_Device.h"
-#include "dot_Swapchain.h"
-#include "dot_Pipeline.h"
+#include "dot_Renderer.h"
 
 #include "Window.h"
 
@@ -17,13 +16,11 @@ public:
     Graphics(const Graphics&&) = delete;
     Graphics& operator=(const Graphics&) = delete;
     Graphics& operator=(const Graphics&&) = delete;
-
     void beginFrame();
     void endFrame();
+    void drawFrame();
 private:
-    dot::Device device;
-    dot::Swapchain swapchain;
-    std::unique_ptr<dot::Pipeline> pPipeline;
-
     Window& wnd;
+    dot::Device device;
+    dot::Renderer renderer;
 };
