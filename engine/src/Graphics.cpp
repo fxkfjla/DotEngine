@@ -9,16 +9,22 @@ Graphics::Graphics(Window& wnd)
 void Graphics::beginFrame()
 {
     renderer.beginFrame();
-    renderer.beginRenderPass();
+
+    if(renderer.frameStarted())
+        renderer.beginRenderPass();
 }
 
 void Graphics::drawFrame()
 {
-    renderer.drawFrame();
+    if(renderer.frameStarted())
+        renderer.drawFrame();
 }
 
 void Graphics::endFrame()
 {
-    renderer.endRenderPass();
-    renderer.endFrame();
+    if(renderer.frameStarted())
+    {
+        renderer.endRenderPass();
+        renderer.endFrame();
+    }
 }
