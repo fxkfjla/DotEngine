@@ -14,12 +14,25 @@ Window::Window()
         glfwTerminate();
         throw DOT_RUNTIME("Failed to create GLFW window!");
     }
-}
+
+    glfwSetWindowUserPointer(pWnd, this);
+    glfwSetFramebufferSizeCallback(pWnd, framebufferResizeCallback);
+}  
 
 Window::~Window()
 {
     glfwDestroyWindow(pWnd);
     glfwTerminate();
+}
+
+bool Window::Resized() const noexcept
+{
+    return _resized;
+}
+
+void Window::Resized(bool state) noexcept
+{
+    _resized = state;
 }
 
 Window::operator GLFWwindow *() const noexcept
@@ -30,5 +43,13 @@ Window::operator GLFWwindow *() const noexcept
 void Window::initGLFWhints() const noexcept
 {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // no OpenGL context
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // window not resizable
+    glfwWindowHint(GLFW_RESIZABLE,  GLFW_TRUE);
+}
+
+void Window::framebufferResizeCallback(GLFWwindow* pWnd, int width, int height) noexcept
+{
+    auto wnd = reinterpret_cast<Window*>(glfwGetWindowUserPointer(pWnd));
+    wnd->Resized(true);
+    wnd->width = width;
+    wnd->height = height;
 }
