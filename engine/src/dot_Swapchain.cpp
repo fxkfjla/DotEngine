@@ -6,8 +6,8 @@
 
 namespace dot
 {
-    Swapchain::Swapchain(Window& wnd, Device& device)
-        : wnd(wnd), device(device)
+    Swapchain::Swapchain(Window& wnd, Device& device, std::shared_ptr<Swapchain> oldSwapchain)
+        : wnd(wnd), device(device), oldSwapchain(oldSwapchain)
     {
         createSwapchain();
         createImageViews();
@@ -31,14 +31,20 @@ namespace dot
         device.getVkDevice().destroySwapchainKHR(swapchain);
     }
 
-    uint32_t Swapchain::acquireNextImage() const
+    vk::Result Swapchain::acquireNextImage(uint32_t& index) const
     {
-        device.getVkDevice().waitForFences(imageInFlightFences[currentFrameInFlight], VK_TRUE, std::numeric_limits<uint64_t>::max());
+        const vk::Device& device = this->device.getVkDevice();
+        const size_t frame = currentFrameInFlight;
+        const uint64_t max = std::numeric_limits<uint64_t>::max();
 
-        return device.getVkDevice().acquireNextImageKHR(swapchain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrameInFlight]).value;
+        device.waitForFences(imageInFlightFences[frame], VK_TRUE, max);
+
+        // using vulkan c api to prevent from throwing an exception
+
+        return vk::Result(vkAcquireNextImageKHR(device, swapchain, max, imageAvailableSemaphores[frame], nullptr, &index));
     }
 
-    void Swapchain::submitCmdBuffer(const vk::CommandBuffer& cmdBuffer, uint32_t imageIndex)
+    vk::Result Swapchain::submitCmdBuffer(const vk::CommandBuffer& cmdBuffer, uint32_t imageIndex)
     {
         device.getVkDevice().waitForFences(imageInFlightFences[currentFrameInFlight], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
@@ -55,16 +61,24 @@ namespace dot
 
         device.getGfxQueue().submit(submitInfo, imageInFlightFences[currentFrameInFlight]);
 
-        vk::PresentInfoKHR presentInfo
-        (
-            renderFinishedSemaphores[currentFrameInFlight], // waitSemaphores
-            swapchain,                                      // swapchains
-            imageIndex                                      // imageIndices
-        );
+        // using vulkan c api to prevent from throwing an exception
 
-        device.getPresentQueue().presentKHR(presentInfo);
+        VkSemaphore waitSemaphores[] = {renderFinishedSemaphores[currentFrameInFlight]};
+        VkSwapchainKHR swapchains[] = {swapchain};
+
+        VkPresentInfoKHR vkPresentInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = waitSemaphores,
+            .swapchainCount = 1,
+            .pSwapchains = swapchains,
+            .pImageIndices = &imageIndex
+        };
 
         currentFrameInFlight = (currentFrameInFlight + 1) % maxFramesInFlight;
+
+        return vk::Result(vkQueuePresentKHR(device.getPresentQueue(), &vkPresentInfo));
     }
 
     Swapchain::operator const vk::SwapchainKHR&() const noexcept
@@ -113,21 +127,21 @@ namespace dot
         
         vk::SwapchainCreateInfoKHR createInfo
         (
-            vk::SwapchainCreateFlagsKHR(0U),                // flags 
-            device.getSurface(),                            // surface
-            imageCount,                                     // minImageCount
-            imageFormat,                                    // imageFormat
-            surfaceFormat.colorSpace,                       // imageColorSpace
-            extent,                                         // imageExtent
-            1,                                              // imageArrayLayers
-            vk::ImageUsageFlagBits::eColorAttachment,       // imageUsage
-            vk::SharingMode::eExclusive,                    // imageSharingMode
-            nullptr,                                        // pQueueFamilyIndices
-            swapchainDetails.capabilities.currentTransform, // preTransform
-            vk::CompositeAlphaFlagBitsKHR::eOpaque,         // compositeAplha
-            presentMode,                                    // presentMode
-            VK_TRUE,                                        // clipped
-            nullptr                                         // oldSwapchain        
+            vk::SwapchainCreateFlagsKHR(0U),                            // flags 
+            device.getSurface(),                                        // surface
+            imageCount,                                                 // minImageCount
+            imageFormat,                                                // imageFormat
+            surfaceFormat.colorSpace,                                   // imageColorSpace
+            extent,                                                     // imageExtent
+            1,                                                          // imageArrayLayers
+            vk::ImageUsageFlagBits::eColorAttachment,                   // imageUsage
+            vk::SharingMode::eExclusive,                                // imageSharingMode
+            nullptr,                                                    // pQueueFamilyIndices
+            swapchainDetails.capabilities.currentTransform,             // preTransform
+            vk::CompositeAlphaFlagBitsKHR::eOpaque,                     // compositeAplha
+            presentMode,                                                // presentMode
+            VK_TRUE,                                                    // clipped
+            oldSwapchain == nullptr ? nullptr : oldSwapchain->swapchain // oldSwapchain        
         );
 
         if(queueIndices.graphicFamily != queueIndices.presentFamily)
@@ -150,35 +164,49 @@ namespace dot
 
     vk::Extent2D Swapchain::getExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const noexcept
     {
-        if(capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-            return capabilities.currentExtent;
-        else
+        int width, height;
+        glfwGetFramebufferSize(wnd, &width, &height);
+
+        vk::Extent2D actualExtent =
         {
-            int width, height;
-            glfwGetFramebufferSize(wnd, &width, &height);
+            static_cast<uint32_t>(width),
+            static_cast<uint32_t>(height)
+        };
 
-            vk::Extent2D actualExtent =
-            {
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height)
-            };
-
-            actualExtent.width = std::clamp
-            (
-                actualExtent.width,
-                capabilities.minImageExtent.width, 
-                capabilities.maxImageExtent.width
-            );
-            actualExtent.height = std::clamp
-            (
-                actualExtent.height,
-                capabilities.minImageExtent.height, 
-                capabilities.maxImageExtent.height
-            );
-
-            return actualExtent;
-        }
+        return actualExtent;
     }
+
+    // vk::Extent2D Swapchain::getExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const noexcept
+    // {
+    //     if(capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+    //         return capabilities.currentExtent;
+    //     else
+    //     {
+    //         int width, height;
+    //         glfwGetFramebufferSize(wnd, &width, &height);
+
+    //         vk::Extent2D actualExtent =
+    //         {
+    //             static_cast<uint32_t>(width),
+    //             static_cast<uint32_t>(height)
+    //         };
+
+    //         actualExtent.width = std::clamp
+    //         (
+    //             actualExtent.width,
+    //             capabilities.minImageExtent.width, 
+    //             capabilities.maxImageExtent.width
+    //         );
+    //         actualExtent.height = std::clamp
+    //         (
+    //             actualExtent.height,
+    //             capabilities.minImageExtent.height, 
+    //             capabilities.maxImageExtent.height
+    //         );
+
+    //         return actualExtent;
+    //     }
+    // }
 
     vk::SurfaceFormatKHR Swapchain::getSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats) const noexcept
     {

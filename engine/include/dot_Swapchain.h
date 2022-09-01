@@ -5,19 +5,21 @@
 
 #include "Window.h"
 
+#include <memory>
+
 namespace dot
 {
     class Swapchain
     {
     public:
-        Swapchain(Window&, Device&);
+        Swapchain(Window&, Device&, std::shared_ptr<Swapchain> oldSwapchain = nullptr);
         Swapchain(const Swapchain&) = delete;
         Swapchain(const Swapchain&&) = delete;
         Swapchain& operator=(const Swapchain&) = delete;
         Swapchain& operator=(const Swapchain&&) = delete;
         ~Swapchain();
-        uint32_t acquireNextImage() const;
-        void submitCmdBuffer(const vk::CommandBuffer&, uint32_t index);
+        vk::Result acquireNextImage(uint32_t&) const;
+        vk::Result submitCmdBuffer(const vk::CommandBuffer&, uint32_t index);
         operator const vk::SwapchainKHR&() const noexcept;
         const vk::Extent2D& getExtent() const noexcept;
         const vk::RenderPass& getRenderPass() const noexcept;
@@ -41,6 +43,7 @@ namespace dot
         vk::PresentModeKHR presentMode;
         vk::Format imageFormat;
         vk::SwapchainKHR swapchain;
+        std::shared_ptr<Swapchain> oldSwapchain = nullptr;
         std::vector<vk::Image> images;
         std::vector<vk::ImageView> imageViews;
         vk::RenderPass renderPass;
