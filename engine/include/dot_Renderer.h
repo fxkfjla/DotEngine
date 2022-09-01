@@ -26,8 +26,9 @@ namespace dot
         void drawFrame();
         void endRenderPass();
         void endFrame();
+        bool frameStarted() const noexcept;
     private:
-        void createSwapchain();
+        void recreateSwapchain();
         void createPipeline(const std::string& vertPath, const std::string& fragPath);
         void allocateCmdBuffersGfx();
         const vk::CommandBuffer& getCurrentCmdBufferGfx();
@@ -35,13 +36,11 @@ namespace dot
         Window& wnd;
         Device& device;
         std::unique_ptr<Swapchain> pSwapchain = nullptr;
-        std::unique_ptr<Swapchain> pPrevSwapchain = nullptr;
         std::unique_ptr<Pipeline> pPipeline = nullptr;
-        std::unique_ptr<Pipeline> pPrevPipeline = nullptr;
         std::vector<vk::CommandBuffer> cmdBuffersGfx;
 
         size_t currentFrameInFlight = 0;
         uint32_t currentImageIndex = 0;
-        bool frameStarted = false;
+        bool _frameStarted = false;
     };
 }

@@ -1,12 +1,14 @@
 #include "dot_Renderer.h"
 #include "dot_Exception.h"
 
+#include <iostream>
+
 namespace dot
 {
     Renderer::Renderer(Window& wnd, Device& device)
         : wnd(wnd), device(device)
     {
-        createSwapchain();
+        recreateSwapchain();
         createPipeline("engine/shaders/vert.spv", "engine/shaders/frag.spv");
         allocateCmdBuffersGfx();
     }
@@ -18,16 +20,15 @@ namespace dot
         device.getVkDevice().freeCommandBuffers(device.getCmdPoolGfx(), cmdBuffersGfx);
     }
 
-    void Renderer::createSwapchain()
+    void Renderer::recreateSwapchain()
     {
-        pPrevSwapchain = std::move(pSwapchain);
-        pSwapchain = std::make_unique<Swapchain>(wnd, device);
+        device.getVkDevice().waitIdle();
+
+        pSwapchain = std::make_unique<Swapchain>(wnd, device, std::move(pSwapchain));
     }
 
     void Renderer::createPipeline(const std::string& vertPath, const std::string& fragPath)
     {
-        pPrevPipeline = std::move(pPipeline);
-
         dot::PipelineConfig pipelineConfig;
         dot::Pipeline::defaultConfig(pipelineConfig, pSwapchain->getRenderPass()); 
         pPipeline = std::make_unique<Pipeline>(device, vertPath, fragPath, pipelineConfig);
@@ -56,13 +57,22 @@ namespace dot
     {
         const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
         cmdBufferGfx.bindPipeline(vk::PipelineBindPoint::eGraphics, *pPipeline);
-        vkCmdDraw(cmdBufferGfx, 3, 1, 0, 0);
+        cmdBufferGfx.draw(3, 1, 0, 0);
     }
 
     void Renderer::beginFrame()
     {
-        currentImageIndex = pSwapchain->acquireNextImage();
-        frameStarted = true;
+        const vk::Result result = pSwapchain->acquireNextImage(currentImageIndex);
+
+        if(result == vk::Result::eErrorOutOfDateKHR)
+        {
+            recreateSwapchain();
+            return;
+        }
+        else if(result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
+            throw DOT_RUNTIME("Failed to acquire swapchain image!");
+
+        _frameStarted = true;
 
         const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
 
@@ -88,9 +98,20 @@ namespace dot
         {
             throw DOT_RUNTIME_WHAT(e);
         }
-        pSwapchain->submitCmdBuffer(cmdBufferGfx, currentImageIndex);
 
-        frameStarted = false;        
+        const vk::Result result = pSwapchain->submitCmdBuffer(cmdBufferGfx, currentImageIndex);
+
+        if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || wnd.Resized())
+        {
+            recreateSwapchain();
+            wnd.Resized(false);
+            _frameStarted = false;        
+            return;
+        }
+        else if(result != vk::Result::eSuccess)
+            throw DOT_RUNTIME("Failed to present swapchain image!");
+
+        _frameStarted = false;        
         currentFrameInFlight = (currentFrameInFlight + 1) % pSwapchain->getMaxFramesInFlight();
     }
 
@@ -124,12 +145,17 @@ namespace dot
 
     void Renderer::endRenderPass()
     {
-        auto cmdBufferGfx = getCurrentCmdBufferGfx();
+        const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
         cmdBufferGfx.endRenderPass();
     }
 
     const vk::CommandBuffer& Renderer::getCurrentCmdBufferGfx()
     {
         return cmdBuffersGfx[currentFrameInFlight];
+    }
+
+    bool Renderer::frameStarted() const noexcept
+    {
+        return _frameStarted;
     }
 }
