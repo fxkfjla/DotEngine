@@ -176,38 +176,6 @@ namespace dot
         return actualExtent;
     }
 
-    // vk::Extent2D Swapchain::getExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const noexcept
-    // {
-    //     if(capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-    //         return capabilities.currentExtent;
-    //     else
-    //     {
-    //         int width, height;
-    //         glfwGetFramebufferSize(wnd, &width, &height);
-
-    //         vk::Extent2D actualExtent =
-    //         {
-    //             static_cast<uint32_t>(width),
-    //             static_cast<uint32_t>(height)
-    //         };
-
-    //         actualExtent.width = std::clamp
-    //         (
-    //             actualExtent.width,
-    //             capabilities.minImageExtent.width, 
-    //             capabilities.maxImageExtent.width
-    //         );
-    //         actualExtent.height = std::clamp
-    //         (
-    //             actualExtent.height,
-    //             capabilities.minImageExtent.height, 
-    //             capabilities.maxImageExtent.height
-    //         );
-
-    //         return actualExtent;
-    //     }
-    // }
-
     vk::SurfaceFormatKHR Swapchain::getSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats) const noexcept
     {
         for(const auto& availableFormat : formats)

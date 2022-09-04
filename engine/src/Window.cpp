@@ -48,6 +48,7 @@ void Window::initGLFWhints() const noexcept
 
 void Window::framebufferResizeCallback(GLFWwindow* pWnd, int width, int height) noexcept
 {
+    glfwWaitEvents();
     auto wnd = reinterpret_cast<Window*>(glfwGetWindowUserPointer(pWnd));
     wnd->Resized(true);
     wnd->width = width;
