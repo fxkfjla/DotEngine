@@ -22,6 +22,14 @@ namespace dot
 
     void Renderer::recreateSwapchain()
     {
+        int width = 0, height = 0;
+        glfwGetFramebufferSize(wnd, &width, &height);
+        while (width == 0 || height == 0)
+        {
+            glfwGetFramebufferSize(wnd, &width, &height);
+            glfwWaitEvents();
+        }
+
         device.getVkDevice().waitIdle();
 
         pSwapchain = std::make_unique<Swapchain>(wnd, device, std::move(pSwapchain));
@@ -62,10 +70,11 @@ namespace dot
 
     void Renderer::beginFrame()
     {
-        const vk::Result result = pSwapchain->acquireNextImage(currentImageIndex);
+        const vk::Result& result = pSwapchain->acquireNextImage(currentImageIndex);
 
         if(result == vk::Result::eErrorOutOfDateKHR)
         {
+            glfwWaitEvents();
             recreateSwapchain();
             return;
         }
@@ -99,10 +108,11 @@ namespace dot
             throw DOT_RUNTIME_WHAT(e);
         }
 
-        const vk::Result result = pSwapchain->submitCmdBuffer(cmdBufferGfx, currentImageIndex);
+        const vk::Result& result = pSwapchain->submitCmdBuffer(cmdBufferGfx, currentImageIndex);
 
         if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || wnd.Resized())
         {
+            glfwWaitEvents();
             recreateSwapchain();
             wnd.Resized(false);
             _frameStarted = false;        
