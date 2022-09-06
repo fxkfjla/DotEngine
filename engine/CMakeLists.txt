@@ -9,6 +9,7 @@ set(SRC
 	src/dot_Swapchain.cpp
 	src/dot_Pipeline.cpp
 	src/dot_Renderer.cpp
+	src/dot_Model.cpp
 	src/dot_Exception.cpp
     src/Window.cpp
     src/Graphics.cpp
