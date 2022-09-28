@@ -57,6 +57,17 @@ namespace dot
         return presentQueue;
     }
 
+    uint32_t Device::getMemoryType(uint32_t typeFilter, const vk::MemoryPropertyFlags& flags) const
+    {
+        vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
+
+        for(uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+            if(typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & flags) == flags)
+                return i;
+
+        throw std::runtime_error("Failed to find suitable memory type!");
+    }
+
     const vk::CommandPool& Device::getCmdPoolGfx() const noexcept
     {
         return cmdPoolGfx;

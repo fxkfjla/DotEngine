@@ -46,6 +46,7 @@ namespace dot
         const vk::Queue& getGfxQueue() const noexcept;
         const vk::Queue& getPresentQueue() const noexcept;
         const vk::CommandPool& getCmdPoolGfx() const noexcept;
+        uint32_t getMemoryType(uint32_t typeFilter, const vk::MemoryPropertyFlags& properties) const;
     private:
         void createSurface();
 
