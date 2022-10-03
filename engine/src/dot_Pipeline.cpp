@@ -1,4 +1,5 @@
 #include "dot_Pipeline.h"
+#include "dot_Model.h"
 #include "dot_Exception.h"
 
 #include "Shader.h"
@@ -76,7 +77,7 @@ namespace dot
             shaderStagesInfo,                       // shaderStagesInfo
             &pipelineConfig.vertexStateInfo,        // pVertexInputState
             &pipelineConfig.inputAssemblyStateInfo, // pInputAssemblyState
-            &pipelineConfig.tesselationStateInfo,   // pTessellationState
+            &pipelineConfig.tessellationStateInfo,  // pTessellationState
             &pipelineConfig.viewportStateInfo,      // pViewportState
             &pipelineConfig.rasterizationStateInfo, // pRasterizationState
             &pipelineConfig.multisampleStateInfo,   // pMultisampleState
@@ -100,6 +101,16 @@ namespace dot
 
     void Pipeline::defaultConfig(PipelineConfig& pipelineConfig, const vk::RenderPass& renderPass)
     {
+        pipelineConfig.bindingDescriptions = std::move(Model::Vertex::getBindingDescription());
+        pipelineConfig.attributeDescriptions = std::move(Model::Vertex::getAttributeDescription());
+
+        pipelineConfig.vertexStateInfo = vk::PipelineVertexInputStateCreateInfo
+        (
+            vk::PipelineVertexInputStateCreateFlags(0U),    // flags
+            pipelineConfig.bindingDescriptions,             // vertexBindingDescriptions
+            pipelineConfig.attributeDescriptions            // vertexAttributeDescriptions
+        );
+
         pipelineConfig.inputAssemblyStateInfo = vk::PipelineInputAssemblyStateCreateInfo
         (
             vk::PipelineInputAssemblyStateCreateFlags(0U),  // flags
@@ -153,7 +164,7 @@ namespace dot
 
         pipelineConfig.colorBlendStateInfo = vk::PipelineColorBlendStateCreateInfo
         (
-            vk::PipelineColorBlendStateCreateFlags(0U), //flags
+            vk::PipelineColorBlendStateCreateFlags(0U), // flags
             VK_FALSE,                                   // logicOpEnable
             vk::LogicOp::eCopy,                         // logicOp
             pipelineConfig.colorBlendAttachmentState,   // attachments
