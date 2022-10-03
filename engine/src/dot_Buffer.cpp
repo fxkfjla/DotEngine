@@ -21,9 +21,15 @@ namespace dot
         destroyBuffer();
     }
 
+    Buffer::operator const vk::Buffer&() const noexcept
+    {
+        return buffer;
+    }
+
     void Buffer::map(const vk::DeviceSize& size, const vk::DeviceSize& offset) noexcept
     {
-        data = device.getVkDevice().mapMemory(memory, offset, size);
+        if(!data)
+            data = device.getVkDevice().mapMemory(memory, offset, size);
     }
 
     void Buffer::unmap() noexcept
@@ -37,6 +43,8 @@ namespace dot
 
     void Buffer::write(void* data, const vk::DeviceSize& size, const vk::DeviceSize& offset) noexcept
     {
+        map(size, offset);
+
         if(size == VK_WHOLE_SIZE)
             memcpy(this->data, data, this->size);
         else
@@ -45,6 +53,8 @@ namespace dot
             memOffset += offset;
             memcpy(memOffset, data, size);
         }
+
+        unmap();
     }
 
     const vk::Buffer& Buffer::getVkBuffer() const noexcept
