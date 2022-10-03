@@ -34,17 +34,25 @@ namespace dot
     {
         uint32_t vertexSize = sizeof(Vertex);
         vertexCount = static_cast<uint32_t>(verticies.size());
+        vk::DeviceSize bufferSize = vertexSize * vertexCount;
+        auto usageFlags = vk::BufferUsageFlagBits::eTransferSrc;
+        auto memoryFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
+
+        Buffer stagingBuffer
+        (
+            device, vertexSize, vertexCount,
+            vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+        );
+        stagingBuffer.write((void*) verticies.data());
+
         vertexBuffer = std::make_unique<Buffer>
         (
-            device, 
-            vertexSize, vertexCount, 
-            vk::BufferUsageFlagBits::eVertexBuffer,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+            device, vertexSize, vertexCount, 
+            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal
         );
 
-        vertexBuffer->map();
-        vertexBuffer->write((void*)verticies.data());
-    } 
+        device.copyBuffer(stagingBuffer, vertexBuffer->getVkBuffer(), bufferSize);
+    }
 
     void Model::bind(const vk::CommandBuffer& cmdBuffer) const noexcept
     {
