@@ -3,6 +3,7 @@
 #include "dot_Device.h"
 #include "dot_Swapchain.h"
 #include "dot_Pipeline.h"
+#include "dot_Model.h"
 
 #include "Window.h"
 
@@ -42,5 +43,13 @@ namespace dot
         size_t currentFrameInFlight = 0;
         uint32_t currentImageIndex = 0;
         bool _frameStarted = false;
+
+        std::vector<Model::Vertex> verticies =
+        {
+            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        Model model;
     };
 }

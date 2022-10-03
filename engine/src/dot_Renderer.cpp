@@ -6,7 +6,7 @@
 namespace dot
 {
     Renderer::Renderer(Window& wnd, Device& device)
-        : wnd(wnd), device(device)
+        : wnd(wnd), device(device), model(device, verticies)
     {
         recreateSwapchain();
         createPipeline("engine/shaders/vert.spv", "engine/shaders/frag.spv");
@@ -65,7 +65,8 @@ namespace dot
     {
         const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
         cmdBufferGfx.bindPipeline(vk::PipelineBindPoint::eGraphics, *pPipeline);
-        cmdBufferGfx.draw(3, 1, 0, 0);
+        model.bind(cmdBufferGfx);
+        cmdBufferGfx.draw(static_cast<uint32_t>(verticies.size()), 1, 0, 0);
     }
 
     void Renderer::beginFrame()
