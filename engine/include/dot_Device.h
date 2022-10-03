@@ -39,6 +39,9 @@ namespace dot
         Device& operator=(const Device&&) = delete;
         ~Device();
         operator const vk::Device&() const noexcept;
+        vk::CommandBuffer beginTransferCmd() const noexcept;
+        void endTransferCmd(const vk::CommandBuffer&) const noexcept;
+        void copyBuffer(const vk::Buffer& src, const vk::Buffer& dst, const vk::DeviceSize& size) const noexcept;
         const SwapchainSupportDetails& getSwapchainDetails() const noexcept;
         const vk::SurfaceKHR& getSurface() const noexcept;
         const QueueFamilyIndices& getQueueFamiliyIndices() const noexcept;
@@ -59,6 +62,7 @@ namespace dot
         void createLogicalDevice();
 
         void createCmdPoolGfx();
+        void createCmdPoolTransfer();
 
         vk::SurfaceKHR surface;
         vk::PhysicalDevice physicalDevice;
@@ -66,6 +70,7 @@ namespace dot
         vk::Queue graphicQueue;
         vk::Queue presentQueue;
         vk::CommandPool cmdPoolGfx;
+        vk::CommandPool cmdPoolTransfer;
 
         const std::vector<const char*> deviceExtensions =
         {

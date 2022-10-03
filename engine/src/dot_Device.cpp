@@ -13,10 +13,12 @@ namespace dot
         selectPhysicalDevice();
         createLogicalDevice();
         createCmdPoolGfx();
+        createCmdPoolTransfer();
     }
 
     Device::~Device()
     {
+        device.destroyCommandPool(cmdPoolTransfer);
         device.destroyCommandPool(cmdPoolGfx);
         device.destroy();
         inst.getVkInstance().destroySurfaceKHR(surface);
@@ -25,6 +27,38 @@ namespace dot
     Device::operator const vk::Device&() const noexcept
     {
         return device;
+    }
+
+    vk::CommandBuffer Device::beginTransferCmd() const noexcept
+    {
+        vk::CommandBufferAllocateInfo allocInfo(cmdPoolTransfer, vk::CommandBufferLevel::ePrimary, 1);
+        vk::CommandBuffer cmdBuffer = device.allocateCommandBuffers(allocInfo).front(); 
+
+        vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        cmdBuffer.begin(beginInfo);
+
+        return std::move(cmdBuffer);
+    }
+
+    void Device::endTransferCmd(const vk::CommandBuffer& cmdBuffer) const noexcept
+    {
+        cmdBuffer.end();
+
+        vk::SubmitInfo submitInfo({}, {}, cmdBuffer);
+        graphicQueue.submit(submitInfo);
+        graphicQueue.waitIdle();
+
+        device.freeCommandBuffers(cmdPoolTransfer, cmdBuffer);
+    }
+
+    void Device::copyBuffer(const vk::Buffer& src, const vk::Buffer& dst, const vk::DeviceSize& size) const noexcept
+    {
+        auto&& cmdBuffer = beginTransferCmd();
+
+        vk::BufferCopy copy(0, 0, size);
+        cmdBuffer.copyBuffer(src, dst, copy);
+
+        endTransferCmd(cmdBuffer);
     }
 
     const Device::SwapchainSupportDetails& Device::getSwapchainDetails() const noexcept
@@ -235,6 +269,20 @@ namespace dot
         try
         {
             cmdPoolGfx = device.createCommandPool(createInfo);
+        }
+        catch(const std::runtime_error& e)
+        {
+            throw DOT_RUNTIME_WHAT(e);
+        }
+    }
+
+    void Device::createCmdPoolTransfer()
+    {
+        vk::CommandPoolCreateInfo createInfo(vk::CommandPoolCreateFlagBits::eTransient, queueIndices.presentFamily.value()); 
+
+        try
+        {
+            cmdPoolTransfer = device.createCommandPool(createInfo);
         }
         catch(const std::runtime_error& e)
         {
