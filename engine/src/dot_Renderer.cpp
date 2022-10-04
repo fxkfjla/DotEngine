@@ -66,7 +66,7 @@ namespace dot
         const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
         cmdBufferGfx.bindPipeline(vk::PipelineBindPoint::eGraphics, *pPipeline);
         model.bind(cmdBufferGfx);
-        cmdBufferGfx.draw(static_cast<uint32_t>(verticies.size()), 1, 0, 0);
+        model.draw(cmdBufferGfx);
     }
 
     void Renderer::beginFrame()
