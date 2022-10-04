@@ -23,6 +23,7 @@ namespace dot
         };
         Model(Device&, const std::vector<Vertex>&);
         void bind(const vk::CommandBuffer&) const noexcept;
+        void draw(const vk::CommandBuffer&) const noexcept;
     private:
         void createVertexBuffer(const std::vector<Vertex>&) noexcept;
         std::unique_ptr<Buffer> vertexBuffer;

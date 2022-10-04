@@ -58,4 +58,9 @@ namespace dot
     {
         cmdBuffer.bindVertexBuffers(0, vertexBuffer->getVkBuffer(), {0});
     }
+
+    void Model::draw(const vk::CommandBuffer& cmdBuffer) const noexcept
+    {
+        cmdBuffer.draw(vertexCount, 1, 0, 0);
+    }
 }
