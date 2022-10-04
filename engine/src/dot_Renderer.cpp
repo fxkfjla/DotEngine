@@ -6,7 +6,7 @@
 namespace dot
 {
     Renderer::Renderer(Window& wnd, Device& device)
-        : wnd(wnd), device(device), model(device, verticies)
+        : wnd(wnd), device(device)
     {
         recreateSwapchain();
         createPipeline("engine/shaders/vert.spv", "engine/shaders/frag.spv");
@@ -20,7 +20,7 @@ namespace dot
         device.getVkDevice().freeCommandBuffers(device.getCmdPoolGfx(), cmdBuffersGfx);
     }
 
-    void Renderer::recreateSwapchain()
+    void Renderer::recreateSwapchain() noexcept
     {
         int width = 0, height = 0;
         glfwGetFramebufferSize(wnd, &width, &height);
@@ -61,14 +61,6 @@ namespace dot
         }
     }
 
-    void Renderer::drawFrame()
-    {
-        const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
-        cmdBufferGfx.bindPipeline(vk::PipelineBindPoint::eGraphics, *pPipeline);
-        model.bind(cmdBufferGfx);
-        model.draw(cmdBufferGfx);
-    }
-
     void Renderer::beginFrame()
     {
         const vk::Result& result = pSwapchain->acquireNextImage(currentImageIndex);
@@ -95,10 +87,49 @@ namespace dot
         {
             throw DOT_RUNTIME_WHAT(e);
         }
+
+        beginRenderPass();
+    }
+
+    void Renderer::beginRenderPass() const noexcept
+    {
+        vk::Rect2D renderArea(vk::Offset2D(0, 0), pSwapchain->getExtent());
+        vk::ClearValue clearValue;
+
+        vk::RenderPassBeginInfo beginInfo
+        (
+            pSwapchain->getRenderPass(),                        // renderPass
+            pSwapchain->getFramebuffer(currentImageIndex),      // framebuffer
+            renderArea,                                         // renderArea
+            clearValue                                          // clearValue 
+        );
+
+        auto cmdBufferGfx = getCurrentCmdBufferGfx();
+        cmdBufferGfx.beginRenderPass(beginInfo, vk::SubpassContents::eInline);
+
+        vk::Viewport viewport
+        (
+            0.0f, 0.0f,                             // x, y
+            (float)pSwapchain->getExtent().width,   // width
+            (float)pSwapchain->getExtent().height,  // height
+            0.0f, 1.0f                              // minDepth, maxDepth
+        );
+
+        cmdBufferGfx.setViewport(0, viewport);
+        cmdBufferGfx.setScissor(0, renderArea);
+        cmdBufferGfx.bindPipeline(vk::PipelineBindPoint::eGraphics, *pPipeline);
+    }
+
+    void Renderer::endRenderPass() const noexcept
+    {
+        const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
+        cmdBufferGfx.endRenderPass();
     }
 
     void Renderer::endFrame()
     {
+        endRenderPass();
+
         const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
         try
         {
@@ -126,41 +157,7 @@ namespace dot
         currentFrameInFlight = (currentFrameInFlight + 1) % pSwapchain->getMaxFramesInFlight();
     }
 
-    void Renderer::beginRenderPass()
-    {
-        vk::Rect2D renderArea(vk::Offset2D(0, 0), pSwapchain->getExtent());
-        vk::ClearValue clearValue;
-
-        vk::RenderPassBeginInfo beginInfo
-        (
-            pSwapchain->getRenderPass(),                        // renderPass
-            pSwapchain->getFramebuffer(currentImageIndex),      // framebuffer
-            renderArea,                                         // renderArea
-            clearValue                                          // clearValue 
-        );
-
-        auto cmdBufferGfx = getCurrentCmdBufferGfx();
-        cmdBufferGfx.beginRenderPass(beginInfo, vk::SubpassContents::eInline);
-
-        vk::Viewport viewport
-        (
-            0.0f, 0.0f,                             // x, y
-            (float)pSwapchain->getExtent().width,   // width
-            (float)pSwapchain->getExtent().height,  // height
-            0.0f, 1.0f                              // minDepth, maxDepth
-        );
-
-        cmdBufferGfx.setViewport(0, viewport);
-        cmdBufferGfx.setScissor(0, renderArea);
-    }
-
-    void Renderer::endRenderPass()
-    {
-        const auto& cmdBufferGfx = getCurrentCmdBufferGfx();
-        cmdBufferGfx.endRenderPass();
-    }
-
-    const vk::CommandBuffer& Renderer::getCurrentCmdBufferGfx()
+    const vk::CommandBuffer& Renderer::getCurrentCmdBufferGfx() const noexcept
     {
         return cmdBuffersGfx[currentFrameInFlight];
     }

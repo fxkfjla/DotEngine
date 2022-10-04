@@ -3,7 +3,6 @@
 #include "dot_Device.h"
 #include "dot_Swapchain.h"
 #include "dot_Pipeline.h"
-#include "dot_Model.h"
 
 #include "Window.h"
 
@@ -23,16 +22,15 @@ namespace dot
         Renderer& operator=(const Renderer&&) = delete;
         ~Renderer();
         void beginFrame();
-        void beginRenderPass();
-        void drawFrame();
-        void endRenderPass();
         void endFrame();
+        const vk::CommandBuffer& getCurrentCmdBufferGfx() const noexcept;
         bool frameStarted() const noexcept;
     private:
-        void recreateSwapchain();
+        void beginRenderPass() const noexcept;
+        void endRenderPass() const noexcept;
+        void recreateSwapchain() noexcept;
         void createPipeline(const std::string& vertPath, const std::string& fragPath);
         void allocateCmdBuffersGfx();
-        const vk::CommandBuffer& getCurrentCmdBufferGfx();
 
         Window& wnd;
         Device& device;
@@ -43,13 +41,5 @@ namespace dot
         size_t currentFrameInFlight = 0;
         uint32_t currentImageIndex = 0;
         bool _frameStarted = false;
-
-        std::vector<Model::Vertex> verticies =
-        {
-            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-        };
-        Model model;
     };
 }
