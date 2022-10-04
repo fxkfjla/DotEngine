@@ -5,7 +5,7 @@ namespace dot
     Engine::Engine(Window& wnd)
         : wnd(wnd), device(wnd), renderer(wnd, device)
     {
-        model = std::make_unique<Model>(device, verticies);
+        loadModels();
     }
 
     void Engine::run()
@@ -30,7 +30,18 @@ namespace dot
     {
         const auto& cmdBufferGfx = renderer.getCurrentCmdBufferGfx();
 
-        model->bind(cmdBufferGfx);
-        model->draw(cmdBufferGfx);
+        triangle->bind(cmdBufferGfx);
+        triangle->draw(cmdBufferGfx);
+    }
+
+    void Engine::loadModels()
+    {
+        std::vector<Model::Vertex> verticies =
+        {
+            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        triangle = std::make_unique<Model>(device, verticies);
     }
 }

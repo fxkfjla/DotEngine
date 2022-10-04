@@ -16,6 +16,7 @@ namespace dot
         Engine(Window&);
         void run();
     private:
+        void loadModels();
         void updateFrame();
         void renderFrame();
 
@@ -23,12 +24,6 @@ namespace dot
         Device device;
         Renderer renderer;
 
-        std::vector<Model::Vertex> verticies =
-        {
-            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-        };
-        std::unique_ptr<Model> model;
+        std::unique_ptr<Model> triangle;
     };
 }
