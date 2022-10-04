@@ -3,9 +3,9 @@
 namespace dot
 {
     Engine::Engine(Window& wnd)
-        : wnd(wnd), gfx(wnd)
+        : wnd(wnd), device(wnd), renderer(wnd, device)
     {
-
+        model = std::make_unique<Model>(device, verticies);
     }
 
     void Engine::run()
@@ -14,9 +14,10 @@ namespace dot
         {
             glfwPollEvents();
 
-            gfx.beginFrame();
-            gfx.drawFrame();
-            gfx.endFrame();
+            renderer.beginFrame();
+            updateFrame();
+            renderFrame();
+            renderer.endFrame();
         }
     }
 
@@ -27,6 +28,9 @@ namespace dot
 
     void Engine::renderFrame()
     {
+        const auto& cmdBufferGfx = renderer.getCurrentCmdBufferGfx();
 
+        model->bind(cmdBufferGfx);
+        model->draw(cmdBufferGfx);
     }
 }

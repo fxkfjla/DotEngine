@@ -1,7 +1,12 @@
 #pragma once
 
+#include "dot_Device.h"
+#include "dot_Renderer.h"
+#include "dot_Model.h"
+
 #include "Window.h"
-#include "Graphics.h"
+
+#include <memory>
 
 namespace dot
 {
@@ -15,6 +20,15 @@ namespace dot
         void renderFrame();
 
         Window& wnd;
-        Graphics gfx;
+        Device device;
+        Renderer renderer;
+
+        std::vector<Model::Vertex> verticies =
+        {
+            {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        std::unique_ptr<Model> model;
     };
 }
