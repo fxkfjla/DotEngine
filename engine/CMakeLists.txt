@@ -13,7 +13,6 @@ set(SRC
 	src/dot_Buffer.cpp
 	src/dot_Exception.cpp
     src/Window.cpp
-    src/Graphics.cpp
 	src/Shader.cpp
 )
 
