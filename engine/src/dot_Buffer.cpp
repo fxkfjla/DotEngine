@@ -92,6 +92,7 @@ namespace dot
 
     void Buffer::destroyBuffer() noexcept
     {
+        device.getVkDevice().waitIdle();
         device.getVkDevice().destroyBuffer(buffer);
         device.getVkDevice().freeMemory(memory); 
     }
